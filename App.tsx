@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Lobby } from './components/Lobby';
 import { PokerRoom } from './components/PokerRoom';
@@ -11,6 +12,20 @@ const App: React.FC = () => {
   // Session State
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{id: string, name: string} | null>(null);
+  
+  // Deep Link State
+  const [initialRoomId, setInitialRoomId] = useState<string | undefined>(undefined);
+
+  // Check URL for room param on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const roomParam = params.get('room');
+    if (roomParam) {
+      setInitialRoomId(roomParam);
+      // Clear the param from URL without refresh so it doesn't stick if they leave
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   // Apply Theme
   useEffect(() => {
@@ -94,7 +109,10 @@ const App: React.FC = () => {
                 onLeave={handleLeaveSession}
             />
         ) : (
-            <Lobby onJoin={handleJoinSession} />
+            <Lobby 
+                onJoin={handleJoinSession} 
+                initialRoomId={initialRoomId}
+            />
         )}
     </div>
   );

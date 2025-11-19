@@ -1,9 +1,10 @@
 
-import React from 'react';
-import { Users, Info, LogOut, Eye, EyeOff } from 'lucide-react';
+import React, { useState } from 'react';
+import { Users, Info, LogOut, Eye, EyeOff, Link as LinkIcon, Check } from 'lucide-react';
 
 interface HeaderProps {
   sessionName: string;
+  sessionId: string;
   participantCount: number;
   onLeave: () => void;
   isPresenterMode: boolean;
@@ -12,11 +13,24 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ 
   sessionName, 
+  sessionId,
   participantCount, 
   onLeave,
   isPresenterMode,
   setIsPresenterMode
 }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = () => {
+    const url = new URL(window.location.origin + window.location.pathname);
+    url.searchParams.set('room', sessionId);
+    
+    navigator.clipboard.writeText(url.toString()).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <header className="px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex justify-between items-center sticky top-0 z-20 shrink-0 transition-colors duration-300">
       <div className="flex items-center gap-3">
@@ -34,6 +48,22 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Right Actions - Margin added to avoid overlap with absolute theme switcher */}
       <div className="flex items-center gap-3 sm:gap-4 mr-16">
         
+        {/* Share Button */}
+        <button
+          onClick={handleShare}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 ${
+             copied 
+             ? 'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' 
+             : 'bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'
+          }`}
+          title="Copy Room Link"
+        >
+           {copied ? <Check size={16} /> : <LinkIcon size={16} />}
+           <span className="text-xs font-medium hidden sm:inline">
+             {copied ? 'Copied!' : 'Share'}
+           </span>
+        </button>
+
         {/* Presenter Mode Toggle */}
         <button
           onClick={() => setIsPresenterMode(!isPresenterMode)}

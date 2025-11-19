@@ -5,9 +5,10 @@ import { createSession, joinSession, subscribeToSessionList } from '../services/
 
 interface LobbyProps {
   onJoin: (sessionId: string, userId: string, userName: string) => void;
+  initialRoomId?: string;
 }
 
-export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
+export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
   // Load initial name from localStorage if available
   const [userName, setUserName] = useState(() => {
     return localStorage.getItem('scrum_poker_username') || '';
@@ -34,6 +35,16 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
   useEffect(() => {
     localStorage.setItem('scrum_poker_username', userName);
   }, [userName]);
+
+  // Handle Deep Link (initialRoomId)
+  useEffect(() => {
+      if (initialRoomId) {
+          setJoinSessionId(initialRoomId);
+          setActiveTab('join');
+          // Check if protected logic would require fetching session info,
+          // skipping for now or defaulting to unprotected until error
+      }
+  }, [initialRoomId]);
 
   // Listen for session list updates
   useEffect(() => {

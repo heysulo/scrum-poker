@@ -9,6 +9,7 @@ import { Controls } from './Controls';
 import { Statistics } from './Statistics';
 import { ParticipantList } from './ParticipantList';
 import { Deck } from './Deck';
+import { Link as LinkIcon, Check } from 'lucide-react';
 
 interface PokerRoomProps {
   sessionId: string;
@@ -16,6 +17,10 @@ interface PokerRoomProps {
   userName: string;
   onLeave: () => void;
 }
+
+// Custom Header Wrapper to include Share logic since Header.tsx was already modified partially
+// Actually, I will override the Header import content by modifying Header.tsx fully in the next block.
+// For now, let's update PokerRoom to pass the sessionId.
 
 export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userName, onLeave }) => {
   // Local UI State
@@ -117,7 +122,8 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
       `}</style>
 
       <Header 
-        sessionName={sessionName} 
+        sessionName={sessionName}
+        sessionId={sessionId} // Passing ID for sharing
         participantCount={participants.length} 
         onLeave={onExit}
         isPresenterMode={isPresenterMode}
