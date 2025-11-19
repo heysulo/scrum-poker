@@ -51,7 +51,7 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                 isBreak 
                     ? 'border-amber-300 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/10' 
                     : hasChanged
-                      ? 'border-violet-200 dark:border-violet-700 bg-white dark:bg-violet-900/20 shadow-lg shadow-violet-500/10'
+                      ? 'border-violet-300 dark:border-violet-600 bg-violet-100 dark:bg-violet-900/50 shadow-lg shadow-violet-500/20'
                     : showReadyGreen 
                         ? 'border-green-500 dark:border-green-500 bg-green-100 dark:bg-green-900/40 shadow-[0_4px_12px_-2px_rgba(34,197,94,0.2)]' 
                         : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/50'
@@ -76,7 +76,7 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                 <div className="font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
                   {p.name} {isMe && <span className="text-xs text-slate-400">(You)</span>}
                 </div>
-                <div className={`text-xs font-mono ${isBreak ? 'text-amber-600' : hasChanged ? 'text-violet-500 dark:text-violet-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                <div className={`text-xs font-mono ${isBreak ? 'text-amber-600' : hasChanged ? 'text-violet-600 dark:text-violet-300' : 'text-emerald-600 dark:text-emerald-400'}`}>
                   {isBreak ? 'ON BREAK' : hasChanged ? 'UPDATED' : p.vote ? 'READY' : 'THINKING'}
                 </div>
               </div>
