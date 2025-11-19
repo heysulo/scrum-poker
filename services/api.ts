@@ -80,6 +80,14 @@ export const joinSession = async (sessionId: string, passwordInput: string | nul
   return userId; // Return the local persistent ID
 };
 
+export const getSession = async (sessionId: string) => {
+  const res = await fetch(`${API_URL}/sessions/${sessionId}`);
+  if (!res.ok) {
+    throw new Error('Session not found');
+  }
+  return await res.json();
+};
+
 export const leaveSession = async (sessionId: string, userId: string) => {
   // userId param is passed from hook, but should match getPersistentUserId()
   await fetch(`${API_URL}/sessions/${sessionId}/leave`, {

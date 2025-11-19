@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, Lock, LogIn, RefreshCw, Terminal, Search, Users, Clock } from 'lucide-react';
-import { createSession, joinSession, subscribeToSessionList } from '../services/api';
+import { createSession, joinSession, subscribeToSessionList, getSession } from '../services/api';
 
 interface LobbyProps {
   onJoin: (sessionId: string, userId: string, userName: string) => void;
@@ -41,8 +41,17 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
       if (initialRoomId) {
           setJoinSessionId(initialRoomId);
           setActiveTab('join');
-          // Check if protected logic would require fetching session info,
-          // skipping for now or defaulting to unprotected until error
+          
+          // Check if the room is protected
+          getSession(initialRoomId)
+            .then(session => {
+                setSelectedSessionProtected(!!session.protected);
+            })
+            .catch(err => {
+                console.error("Failed to verify session:", err);
+                // Not setting error here to allow user to try anyway, 
+                // or could set "Room not found" error.
+            });
       }
   }, [initialRoomId]);
 
@@ -311,4 +320,4 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
       </div>
     </div>
   );
-};
+}

@@ -190,6 +190,18 @@ export const joinSession = async (sessionId: string, passwordInput: string | nul
   return userId;
 };
 
+export const getSession = async (sessionId: string) => {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const session = MOCK_SESSIONS[sessionId];
+  if (!session) throw new Error("Session not found");
+  return {
+    id: session.id,
+    name: session.name,
+    protected: !!session.protected,
+    participantsCount: Object.keys(session.participants).length
+  };
+};
+
 export const leaveSession = async (sessionId: string, userId: string) => {
   const session = MOCK_SESSIONS[sessionId];
   if (session && session.participants[userId]) {
