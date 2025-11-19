@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Lobby } from './components/Lobby';
 import { PokerRoom } from './components/PokerRoom';
-import { Sun, Moon, Monitor, Check, ChevronDown } from 'lucide-react';
+import { Sun, Moon, Monitor, Check, ChevronDown, WifiOff } from 'lucide-react';
+import { subscribeToConnectionStatus } from './services/api';
 
 const App: React.FC = () => {
   // Global Theme State
@@ -12,6 +13,9 @@ const App: React.FC = () => {
   // Session State
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{id: string, name: string} | null>(null);
+  
+  // Connection State
+  const [isConnected, setIsConnected] = useState(true);
   
   // Deep Link State
   const [initialRoomId, setInitialRoomId] = useState<string | undefined>(undefined);
@@ -25,6 +29,14 @@ const App: React.FC = () => {
       // Clear the param from URL without refresh so it doesn't stick if they leave
       window.history.replaceState({}, '', window.location.pathname);
     }
+  }, []);
+
+  // Subscribe to Connection Status (Global)
+  useEffect(() => {
+    const unsubscribe = subscribeToConnectionStatus((connected) => {
+      setIsConnected(connected);
+    });
+    return () => unsubscribe();
   }, []);
 
   // Apply Theme
@@ -61,8 +73,16 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-50 via-slate-50 to-white dark:from-slate-800 dark:via-slate-900 dark:to-black text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-300">
+    <div className="h-screen flex flex-col bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-50 via-slate-50 to-white dark:from-slate-800 dark:via-slate-900 dark:to-black text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-300 relative">
         
+        {/* Disconnection Banner (Global) */}
+        {!isConnected && (
+          <div className="absolute top-0 left-0 right-0 bg-red-500 text-white py-2 px-4 text-center text-sm font-bold flex items-center justify-center gap-2 animate-in slide-in-from-top-full z-[60] shadow-lg">
+              <WifiOff size={16} />
+              <span>Disconnected: Cannot reach backend server. Reconnecting...</span>
+          </div>
+        )}
+
         {/* Floating Theme Switcher (Always visible) */}
         <div className="absolute top-4 right-4 z-50">
              <div className="relative">

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Lock, LogIn, RefreshCw, Terminal, Search, Users, Clock, WifiOff } from 'lucide-react';
-import { createSession, joinSession, subscribeToSessionList, getSession, subscribeToConnectionStatus } from '../services/api';
+import { Plus, Lock, LogIn, RefreshCw, Terminal, Search, Users, Clock } from 'lucide-react';
+import { createSession, joinSession, subscribeToSessionList, getSession } from '../services/api';
 
 interface LobbyProps {
   onJoin: (sessionId: string, userId: string, userName: string) => void;
@@ -17,7 +17,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
   const [activeTab, setActiveTab] = useState<'join' | 'create' | 'list'>('list');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(true);
 
   // Session List State
   const [availableSessions, setAvailableSessions] = useState<any[]>([]);
@@ -36,14 +35,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
   useEffect(() => {
     localStorage.setItem('scrum_poker_username', userName);
   }, [userName]);
-
-  // Listen for connection status
-  useEffect(() => {
-    const unsubscribe = subscribeToConnectionStatus((connected) => {
-        setIsConnected(connected);
-    });
-    return () => unsubscribe();
-  }, []);
 
   // Handle Deep Link (initialRoomId)
   useEffect(() => {
@@ -126,14 +117,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
   return (
     <div className="flex flex-col h-full items-center justify-center p-4 overflow-y-auto relative">
       
-      {/* Disconnection Banner */}
-      {!isConnected && (
-        <div className="absolute top-0 left-0 right-0 bg-red-500 text-white py-2 px-4 text-center text-sm font-bold flex items-center justify-center gap-2 animate-in slide-in-from-top-full z-50 shadow-lg">
-            <WifiOff size={16} />
-            <span>Disconnected: Cannot reach backend server. Reconnecting...</span>
-        </div>
-      )}
-
       <div className="w-full max-w-4xl bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col md:flex-row min-h-[600px]">
         
         {/* Left Panel: Identity & Info */}
@@ -148,13 +131,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
                 <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-4">
                     Real-time agile estimation for remote teams.
                 </p>
-                <div className={`rounded-lg p-3 text-xs flex gap-2 border ${isConnected ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-300' : 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800 text-red-600 dark:text-red-300'}`}>
-                  <Terminal size={16} className="shrink-0" />
-                  <div>
-                    <span className="font-bold block mb-1">Backend Status</span>
-                    {isConnected ? "Connected: Node.js + Socket.io" : "Connection Lost"}
-                  </div>
-                </div>
             </div>
         </div>
 
@@ -217,7 +193,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
                     <div className="flex-1 overflow-y-auto pr-2 space-y-3 scrollbar-hide">
                         {filteredSessions.length === 0 ? (
                             <div className="text-center py-10 text-slate-400">
-                                {availableSessions.length === 0 ? (isConnected ? "No active rooms found. Create one!" : "Connecting to server...") : "No matches found."}
+                                {availableSessions.length === 0 ? "No active rooms found. Create one!" : "No matches found."}
                             </div>
                         ) : (
                             filteredSessions.map(session => (
@@ -281,7 +257,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
                     <div className="mt-8">
                         <button 
                             type="submit"
-                            disabled={loading || !isConnected}
+                            disabled={loading}
                             className="w-full py-4 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {loading ? <RefreshCw className="animate-spin" size={20} /> : <Plus size={20}/>}
@@ -325,7 +301,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
                     <div className="mt-8">
                         <button 
                             type="submit"
-                            disabled={loading || !isConnected}
+                            disabled={loading}
                             className="w-full py-4 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {loading ? <RefreshCw className="animate-spin" size={20} /> : <LogIn size={20}/>}
