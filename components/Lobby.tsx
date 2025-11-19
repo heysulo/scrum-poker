@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Plus, Lock, LogIn, RefreshCw, Terminal, Search, Users, Clock } from 'lucide-react';
 import { createSession, joinSession, subscribeToSessionList } from '../services/firebaseService';
@@ -25,13 +26,15 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
   const [joinSessionPassword, setJoinSessionPassword] = useState('');
   const [selectedSessionProtected, setSelectedSessionProtected] = useState(false);
 
-  // Subscribe to session list on mount
+  // Listen for session list updates (Mock Service)
   useEffect(() => {
-      const unsubscribe = subscribeToSessionList((sessions) => {
-          setAvailableSessions(sessions);
+      if (activeTab !== 'list') return;
+
+      const unsubscribe = subscribeToSessionList((data) => {
+          setAvailableSessions(data);
       });
       return () => unsubscribe();
-  }, []);
+  }, [activeTab]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,8 +104,8 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
                 <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg p-3 text-xs text-indigo-600 dark:text-indigo-300 flex gap-2">
                   <Terminal size={16} className="shrink-0" />
                   <div>
-                    <span className="font-bold block mb-1">Mock Mode Active</span>
-                    Using in-memory dummy data. Bots included.
+                    <span className="font-bold block mb-1">Mock Mode</span>
+                    Simulating backend locally
                   </div>
                 </div>
             </div>
@@ -167,7 +170,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
                     <div className="flex-1 overflow-y-auto pr-2 space-y-3 scrollbar-hide">
                         {filteredSessions.length === 0 ? (
                             <div className="text-center py-10 text-slate-400">
-                                No active rooms found. Why not create one?
+                                {availableSessions.length === 0 ? "No active rooms found. Create one!" : "No matches found."}
                             </div>
                         ) : (
                             filteredSessions.map(session => (
@@ -256,7 +259,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
                                 required
                             />
                         </div>
-                        {/* Only show password field if the selected session is protected, or if entering manually (defaults to true-ish or we can show it always for manual) */}
                         {(activeTab === 'join' && (!joinSessionId || selectedSessionProtected)) && (
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex justify-between">

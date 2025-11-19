@@ -1,3 +1,4 @@
+
 import { io, Socket } from "socket.io-client";
 import { CardValue, Session } from "../types";
 
@@ -7,6 +8,12 @@ const API_URL = 'http://localhost:4000'; // Backend URL
 // --- REST API ---
 
 export const api = {
+  async getSessions(): Promise<any[]> {
+    const res = await fetch(`${API_URL}/sessions`);
+    if (!res.ok) throw new Error('Failed to fetch sessions');
+    return await res.json();
+  },
+
   async createSession(name: string, password: string | null, creatorName: string): Promise<{ sessionId: string, userId: string, session: Session }> {
     const res = await fetch(`${API_URL}/sessions`, {
       method: 'POST',

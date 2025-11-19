@@ -1,6 +1,12 @@
+
 import { useState, useEffect, useMemo } from 'react';
-import { subscribeToSession, castVote, updateRevealState, resetSession } from '../services/firebaseService';
-import { Participant, CardValue, Session } from '../types';
+import { 
+  subscribeToSession, 
+  castVote, 
+  updateRevealState, 
+  resetSession 
+} from '../services/firebaseService';
+import { Participant, CardValue } from '../types';
 import { FIBONACCI_DECK } from '../constants';
 
 // Helper to get index for range calculation
@@ -24,7 +30,7 @@ export const usePokerGame = (
 
   // 1. Connection & Subscription (Mock Service)
   useEffect(() => {
-    const unsubscribe = subscribeToSession(sessionId, (data: Session | null) => {
+    const unsubscribe = subscribeToSession(sessionId, (data) => {
         if (data) {
             setSessionName(data.name);
             setIsRevealed(data.isRevealed);
@@ -135,7 +141,7 @@ export const usePokerGame = (
     });
     modes.sort((a, b) => a - b);
 
-    // Consensus Color
+    // Consensus Color (Green/Emerald Palette)
     let consensusColor = 'bg-green-500'; 
     if (spread === 0) consensusColor = 'bg-emerald-500';
     else if (spread <= 2) consensusColor = 'bg-emerald-400';
