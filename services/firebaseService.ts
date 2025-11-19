@@ -190,6 +190,14 @@ export const joinSession = async (sessionId: string, passwordInput: string | nul
   return userId;
 };
 
+export const leaveSession = async (sessionId: string, userId: string) => {
+  const session = MOCK_SESSIONS[sessionId];
+  if (session && session.participants[userId]) {
+      delete session.participants[userId];
+      notifySession(sessionId);
+  }
+};
+
 export const castVote = (sessionId: string, userId: string, vote: CardValue | null) => {
   const session = MOCK_SESSIONS[sessionId];
   if (session && session.participants[userId]) {

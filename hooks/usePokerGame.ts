@@ -4,8 +4,9 @@ import {
   subscribeToSession, 
   castVote, 
   updateRevealState, 
-  resetSession 
-} from '../services/firebaseService';
+  resetSession,
+  leaveSession
+} from '../services/api';
 import { Participant, CardValue } from '../types';
 import { FIBONACCI_DECK } from '../constants';
 
@@ -28,7 +29,7 @@ export const usePokerGame = (
   // Track initial vote at reveal for "Changed Vote" logic
   const [initialRevealVote, setInitialRevealVote] = useState<CardValue | null>(null);
 
-  // 1. Connection & Subscription (Mock Service)
+  // 1. Connection & Subscription
   useEffect(() => {
     const unsubscribe = subscribeToSession(sessionId, (data) => {
         if (data) {
@@ -79,6 +80,10 @@ export const usePokerGame = (
     if (!isRevealed) {
       updateRevealState(sessionId, true);
     }
+  };
+
+  const handleLeaveGame = () => {
+      leaveSession(sessionId, userId);
   };
 
   // 4. Auto Reveal Timer
@@ -168,6 +173,7 @@ export const usePokerGame = (
     initialRevealVote,
     handleSelectCard,
     handleReveal,
-    handleReset
+    handleReset,
+    handleLeaveGame
   };
 };

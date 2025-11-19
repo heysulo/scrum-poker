@@ -1,14 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, Lock, LogIn, RefreshCw, Terminal, Search, Users, Clock } from 'lucide-react';
-import { createSession, joinSession, subscribeToSessionList } from '../services/firebaseService';
+import { createSession, joinSession, subscribeToSessionList } from '../services/api';
 
 interface LobbyProps {
   onJoin: (sessionId: string, userId: string, userName: string) => void;
 }
 
 export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
-  const [userName, setUserName] = useState('');
+  // Load initial name from localStorage if available
+  const [userName, setUserName] = useState(() => {
+    return localStorage.getItem('scrum_poker_username') || '';
+  });
+  
   const [activeTab, setActiveTab] = useState<'join' | 'create' | 'list'>('list');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +30,12 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
   const [joinSessionPassword, setJoinSessionPassword] = useState('');
   const [selectedSessionProtected, setSelectedSessionProtected] = useState(false);
 
-  // Listen for session list updates (Mock Service)
+  // Persist username changes
+  useEffect(() => {
+    localStorage.setItem('scrum_poker_username', userName);
+  }, [userName]);
+
+  // Listen for session list updates
   useEffect(() => {
       if (activeTab !== 'list') return;
 
@@ -104,8 +113,8 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
                 <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg p-3 text-xs text-indigo-600 dark:text-indigo-300 flex gap-2">
                   <Terminal size={16} className="shrink-0" />
                   <div>
-                    <span className="font-bold block mb-1">Mock Mode</span>
-                    Simulating backend locally
+                    <span className="font-bold block mb-1">Backend Connected</span>
+                    Node.js + Socket.io
                   </div>
                 </div>
             </div>
@@ -114,7 +123,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
         {/* Right Panel: Actions */}
         <div className="w-full md:w-2/3 p-8 bg-white dark:bg-slate-800 flex flex-col">
             
-            {/* User Name Input */}
+            {/* User Name Input (Moved to Right) */}
             <div className="mb-6">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Your Name</label>
                 <input 

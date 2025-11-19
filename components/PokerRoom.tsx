@@ -40,13 +40,19 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
     initialRevealVote,
     handleSelectCard,
     handleReveal,
-    handleReset
+    handleReset,
+    handleLeaveGame
   } = usePokerGame(sessionId, userId, isAutoRevealEnabled, initialTimerValue);
 
   // Clear filter on reset
   const wrappedHandleReset = () => {
     handleReset();
     setFilterVote(null);
+  };
+
+  const onExit = () => {
+      handleLeaveGame();
+      onLeave();
   };
 
   // Keyboard Listener (Global)
@@ -113,7 +119,7 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
       <Header 
         sessionName={sessionName} 
         participantCount={participants.length} 
-        onLeave={onLeave}
+        onLeave={onExit}
         isPresenterMode={isPresenterMode}
         setIsPresenterMode={setIsPresenterMode}
       />
