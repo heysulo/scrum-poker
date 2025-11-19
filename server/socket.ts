@@ -50,8 +50,12 @@ export const setupSocket = (io: Server) => {
       if (session) {
         session.isRevealed = true;
         
-        // Snapshot current votes to initialRevealVote
         Object.values(session.participants).forEach(p => {
+            // Rule: If user hasn't voted when revealed, put them on Break
+            if (p.vote === null) {
+                p.vote = '☕';
+            }
+            // Snapshot current votes to initialRevealVote
             p.initialRevealVote = p.vote;
         });
 

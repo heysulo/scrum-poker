@@ -216,9 +216,13 @@ export const updateRevealState = (sessionId: string, isRevealed: boolean) => {
   if (session) {
     session.isRevealed = isRevealed;
     if (isRevealed) {
-        // Snapshot votes to initialRevealVote
+        // Logic: If user hasn't voted when revealed, put them on Break
         Object.values(session.participants).forEach(p => {
-            p.initialRevealVote = p.vote;
+             if (p.vote === null) {
+                 p.vote = '☕';
+             }
+             // Snapshot votes to initialRevealVote
+             p.initialRevealVote = p.vote;
         });
     }
     notifySession(sessionId);
