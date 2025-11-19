@@ -72,14 +72,14 @@ export const setupSocket = (io: Server) => {
       if (userData) {
         const { sessionId, userId } = userData;
         
-        // Mark offline instead of removing completely
-        // This allows the user to reconnect with the same ID if they refresh
-        store.markParticipantOffline(sessionId, userId);
+        // Remove participant completely on disconnect
+        store.removeParticipant(sessionId, userId);
         
         // Clean up map entry
         socketUserMap.delete(socket.id);
 
         // Notify remaining participants in the room
+        // We need to check if session still exists (it might be deleted if empty)
         const session = store.getPublicSession(sessionId);
         if (session) {
             io.to(sessionId).emit('session_update', session);
