@@ -3,6 +3,9 @@ import { Server, Socket } from 'socket.io';
 import { store } from './store';
 import { CardValue } from './types';
 
+// Map to track socket connections: socketId -> { sessionId, userId }
+const socketUserMap = new Map<string, { sessionId: string, userId: string }>();
+
 export const setupSocket = (io: Server) => {
   io.on('connection', (socket: Socket) => {
     console.log('Client connected:', socket.id);
@@ -13,14 +16,17 @@ export const setupSocket = (io: Server) => {
       if (session) {
         socket.join(sessionId);
         
+        // Track this socket's user
+        socketUserMap.set(socket.id, { sessionId, userId });
+
         // Ensure user exists in store (sync check)
-        if (!session.participants[userId]) {
-           // In a real app, we might validate the token or re-add them
-           // For now, assume they joined via REST API first
-        } else {
+        // If they joined via REST API, they are already there.
+        // If we wanted to handle purely socket-based joins later, we'd add them here.
+        if (session.participants[userId]) {
            session.participants[userId].status = 'online';
         }
         
+        // Notify room of new joiner/status change
         io.to(sessionId).emit('session_update', store.getPublicSession(sessionId));
       }
     });
@@ -60,9 +66,27 @@ export const setupSocket = (io: Server) => {
       }
     });
 
+    // Handle Disconnect
     socket.on('disconnect', () => {
       console.log('Client disconnected:', socket.id);
-      // In a real app, handle offline status or cleanup after timeout
+      
+      const userData = socketUserMap.get(socket.id);
+      if (userData) {
+        const { sessionId, userId } = userData;
+        
+        // Remove participant from store
+        store.removeParticipant(sessionId, userId);
+        
+        // Clean up map entry
+        socketUserMap.delete(socket.id);
+
+        // Notify remaining participants in the room
+        // Check if session still exists (it might have been deleted if empty)
+        const session = store.getPublicSession(sessionId);
+        if (session) {
+            io.to(sessionId).emit('session_update', session);
+        }
+      }
     });
   });
 };
