@@ -59,9 +59,23 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
           
           try {
               const session = await getSession(joinSessionId);
+              
+              // Calculate count: API returns 'participants' map, Mock returns 'participantsCount'
+              let count = 0;
+              if (typeof session.participantsCount === 'number') {
+                  count = session.participantsCount;
+              } else if (session.participants) {
+                  // Filter for online users if status is available, otherwise count all keys
+                  count = Object.values(session.participants).filter((p: any) => p.status === 'online').length;
+                  if (count === 0 && Object.keys(session.participants).length > 0) {
+                       // Fallback if status tracking isn't perfect in some mock scenarios
+                       count = Object.keys(session.participants).length;
+                  }
+              }
+
               setRoomPreview({
                   name: session.name,
-                  participantsCount: session.participantsCount
+                  participantsCount: count
               });
               setSelectedSessionProtected(!!session.protected);
               setError(null);
