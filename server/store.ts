@@ -50,7 +50,8 @@ class Store {
       id: s.id,
       name: s.name,
       createdAt: s.createdAt,
-      participantsCount: Object.keys(s.participants).length,
+      // Only count online participants for the lobby display
+      participantsCount: Object.values(s.participants).filter(p => p.status === 'online').length,
       protected: !!s.protected
     })).sort((a, b) => b.createdAt - a.createdAt);
   }
@@ -58,6 +59,14 @@ class Store {
   addParticipant(sessionId: string, name: string): { userId: string, participant: Participant } | null {
     const session = this.sessions.get(sessionId);
     if (!session) return null;
+
+    // Check if user with same name exists (handle reconnect/refresh)
+    const existingParticipant = Object.values(session.participants).find(p => p.name === name);
+    
+    if (existingParticipant) {
+      existingParticipant.status = 'online';
+      return { userId: existingParticipant.id, participant: existingParticipant };
+    }
 
     const userId = `user-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
     const participant: Participant = {
@@ -80,6 +89,13 @@ class Store {
       if (Object.keys(session.participants).length === 0) {
         this.sessions.delete(sessionId);
       }
+    }
+  }
+
+  markParticipantOffline(sessionId: string, userId: string): void {
+    const session = this.sessions.get(sessionId);
+    if (session && session.participants[userId]) {
+      session.participants[userId].status = 'offline';
     }
   }
 }

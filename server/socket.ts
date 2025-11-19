@@ -20,8 +20,6 @@ export const setupSocket = (io: Server) => {
         socketUserMap.set(socket.id, { sessionId, userId });
 
         // Ensure user exists in store (sync check)
-        // If they joined via REST API, they are already there.
-        // If we wanted to handle purely socket-based joins later, we'd add them here.
         if (session.participants[userId]) {
            session.participants[userId].status = 'online';
         }
@@ -74,14 +72,14 @@ export const setupSocket = (io: Server) => {
       if (userData) {
         const { sessionId, userId } = userData;
         
-        // Remove participant from store
-        store.removeParticipant(sessionId, userId);
+        // Mark offline instead of removing completely
+        // This allows the user to reconnect with the same ID if they refresh
+        store.markParticipantOffline(sessionId, userId);
         
         // Clean up map entry
         socketUserMap.delete(socket.id);
 
         // Notify remaining participants in the room
-        // Check if session still exists (it might have been deleted if empty)
         const session = store.getPublicSession(sessionId);
         if (session) {
             io.to(sessionId).emit('session_update', session);
