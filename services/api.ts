@@ -155,3 +155,24 @@ export const subscribeToSession = (sessionId: string, callback: (data: any) => v
     s.off("session_update", handler);
   };
 };
+
+export const subscribeToConnectionStatus = (callback: (connected: boolean) => void) => {
+  const s = getSocket();
+  
+  // Send immediate status
+  callback(s.connected);
+
+  const onConnect = () => callback(true);
+  const onDisconnect = () => callback(false);
+  const onConnectError = () => callback(false);
+
+  s.on('connect', onConnect);
+  s.on('disconnect', onDisconnect);
+  s.on('connect_error', onConnectError);
+
+  return () => {
+    s.off('connect', onConnect);
+    s.off('disconnect', onDisconnect);
+    s.off('connect_error', onConnectError);
+  };
+};

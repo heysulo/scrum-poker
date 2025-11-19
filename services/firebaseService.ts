@@ -270,3 +270,9 @@ export const subscribeToSession = (sessionId: string, callback: (data: any) => v
     if (idx !== -1) LISTENERS[sessionId].splice(idx, 1);
   };
 };
+
+export const subscribeToConnectionStatus = (callback: (connected: boolean) => void) => {
+  // Mock mode is always 'connected' locally
+  callback(true);
+  return () => {};
+};
