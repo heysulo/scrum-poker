@@ -1,5 +1,6 @@
 
 import { Server, Socket } from 'socket.io';
+import logger from 'perfect-logger';
 import { store } from './store';
 import { CardValue } from './types';
 
@@ -8,10 +9,11 @@ const socketUserMap = new Map<string, { sessionId: string, userId: string }>();
 
 export const setupSocket = (io: Server) => {
   io.on('connection', (socket: Socket) => {
-    console.log('Client connected:', socket.id);
+    logger.info(`[Socket] Client connected: ${socket.id}`);
 
     // Join Room
     socket.on('join_room', ({ sessionId, userId, name }) => {
+      logger.debug(`[Socket] join_room: ${name} (${userId}) -> ${sessionId}`);
       const session = store.getSession(sessionId);
       if (session) {
         socket.join(sessionId);
@@ -26,11 +28,14 @@ export const setupSocket = (io: Server) => {
         
         // Notify room of new joiner/status change
         io.to(sessionId).emit('session_update', store.getPublicSession(sessionId));
+      } else {
+        logger.warn(`[Socket] join_room failed: Session ${sessionId} not found`);
       }
     });
 
     // Vote
     socket.on('vote', ({ sessionId, userId, value }: { sessionId: string, userId: string, value: CardValue | null }) => {
+      logger.debug(`[Socket] vote: ${userId} -> ${value} (Session: ${sessionId})`);
       const session = store.getSession(sessionId);
       if (session && session.participants[userId]) {
         session.participants[userId].vote = value;
@@ -40,6 +45,7 @@ export const setupSocket = (io: Server) => {
 
     // Reveal
     socket.on('reveal_cards', ({ sessionId }) => {
+      logger.info(`[Socket] reveal_cards: Session ${sessionId}`);
       const session = store.getSession(sessionId);
       if (session) {
         session.isRevealed = true;
@@ -49,6 +55,7 @@ export const setupSocket = (io: Server) => {
 
     // Reset
     socket.on('reset_round', ({ sessionId }) => {
+      logger.info(`[Socket] reset_round: Session ${sessionId}`);
       const session = store.getSession(sessionId);
       if (session) {
         session.isRevealed = false;
@@ -66,13 +73,14 @@ export const setupSocket = (io: Server) => {
 
     // Handle Disconnect
     socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
+      logger.info(`[Socket] Client disconnected: ${socket.id}`);
       
       const userData = socketUserMap.get(socket.id);
       if (userData) {
         const { sessionId, userId } = userData;
         
         // Remove participant completely on disconnect
+        logger.debug(`[Socket] Removing user ${userId} from ${sessionId} due to disconnect`);
         store.removeParticipant(sessionId, userId);
         
         // Clean up map entry

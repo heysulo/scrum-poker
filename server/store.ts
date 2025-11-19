@@ -1,4 +1,5 @@
 
+import logger from 'perfect-logger';
 import { Session, Participant } from './types';
 
 class Store {
@@ -28,6 +29,7 @@ class Store {
     };
 
     this.sessions.set(sessionId, session);
+    logger.debug(`[Store] Created session ${sessionId} (Protected: ${!!password})`);
     return { sessionId, userId, session };
   }
 
@@ -62,12 +64,14 @@ class Store {
     
     if (participant) {
       // User re-joining with same ID
+      logger.debug(`[Store] User ${name} (${userId}) re-connected to ${sessionId}`);
       participant.name = name; // Update name if changed
       participant.status = 'online';
       return { userId, participant };
     }
 
     // New participant with this ID
+    logger.debug(`[Store] New participant ${name} (${userId}) added to ${sessionId}`);
     participant = {
       id: userId,
       name,
@@ -83,8 +87,12 @@ class Store {
   removeParticipant(sessionId: string, userId: string): void {
     const session = this.sessions.get(sessionId);
     if (session) {
-      delete session.participants[userId];
+      if (session.participants[userId]) {
+        logger.debug(`[Store] Removing participant ${userId} from ${sessionId}`);
+        delete session.participants[userId];
+      }
       if (Object.keys(session.participants).length === 0) {
+        logger.info(`[Store] Session ${sessionId} is empty, deleting.`);
         this.sessions.delete(sessionId);
       }
     }
@@ -93,6 +101,7 @@ class Store {
   markParticipantOffline(sessionId: string, userId: string): void {
     const session = this.sessions.get(sessionId);
     if (session && session.participants[userId]) {
+      logger.debug(`[Store] Marking participant ${userId} offline in ${sessionId}`);
       session.participants[userId].status = 'offline';
     }
   }
