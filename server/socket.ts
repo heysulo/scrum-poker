@@ -49,6 +49,12 @@ export const setupSocket = (io: Server) => {
       const session = store.getSession(sessionId);
       if (session) {
         session.isRevealed = true;
+        
+        // Snapshot current votes to initialRevealVote
+        Object.values(session.participants).forEach(p => {
+            p.initialRevealVote = p.vote;
+        });
+
         io.to(sessionId).emit('session_update', store.getPublicSession(sessionId));
       }
     });
@@ -61,7 +67,9 @@ export const setupSocket = (io: Server) => {
         session.isRevealed = false;
         
         // Reset votes but keep 'Break' status
+        // Also clear initialRevealVote
         Object.values(session.participants).forEach(p => {
+          delete p.initialRevealVote;
           if (p.vote !== '☕') {
             p.vote = null;
           }

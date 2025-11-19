@@ -26,9 +26,6 @@ export const usePokerGame = (
   const [sessionName, setSessionName] = useState('Loading...');
   const [autoRevealTimer, setAutoRevealTimer] = useState(initialTimerValue);
   
-  // Track initial vote at reveal for "Changed Vote" logic
-  const [initialRevealVote, setInitialRevealVote] = useState<CardValue | null>(null);
-
   // 1. Connection & Subscription
   useEffect(() => {
     const unsubscribe = subscribeToSession(sessionId, (data) => {
@@ -51,18 +48,6 @@ export const usePokerGame = (
   const myParticipant = participants.find(p => p.id === userId);
   const selectedCard = myParticipant?.vote || null;
 
-  // 2. Logic for "Changed Vote" detection
-  useEffect(() => {
-      if (isRevealed && selectedCard) {
-          if (initialRevealVote === null) {
-              setInitialRevealVote(selectedCard);
-          }
-      } else if (!isRevealed) {
-          setInitialRevealVote(null);
-      }
-  }, [isRevealed, selectedCard, initialRevealVote]);
-
-  const hasChangedVote = isRevealed && initialRevealVote !== null && selectedCard !== initialRevealVote;
   const allVoted = participants.length > 0 && participants.every(p => p.vote !== null);
 
   // 3. Actions
@@ -169,8 +154,6 @@ export const usePokerGame = (
     stats,
     autoRevealTimer,
     allVoted,
-    hasChangedVote,
-    initialRevealVote,
     handleSelectCard,
     handleReveal,
     handleReset,

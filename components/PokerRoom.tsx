@@ -18,10 +18,6 @@ interface PokerRoomProps {
   onLeave: () => void;
 }
 
-// Custom Header Wrapper to include Share logic since Header.tsx was already modified partially
-// Actually, I will override the Header import content by modifying Header.tsx fully in the next block.
-// For now, let's update PokerRoom to pass the sessionId.
-
 export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userName, onLeave }) => {
   // Local UI State
   const [isFooterHovered, setIsFooterHovered] = useState(false);
@@ -41,8 +37,6 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
     stats,
     autoRevealTimer,
     allVoted,
-    hasChangedVote,
-    initialRevealVote,
     handleSelectCard,
     handleReveal,
     handleReset,
@@ -158,8 +152,6 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
             userId={userId}
             isRevealed={isRevealed}
             filterVote={filterVote}
-            hasChangedVote={hasChangedVote}
-            initialRevealVote={initialRevealVote}
             isPresenterMode={isPresenterMode}
           />
 

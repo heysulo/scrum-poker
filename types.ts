@@ -1,9 +1,11 @@
+
 export type CardValue = '0' | '1' | '2' | '3' | '5' | '8' | '13' | '20' | '40' | '100' | '?' | '☕';
 
 export interface Participant {
   id: string;
   name: string;
   vote: CardValue | null;
+  initialRevealVote?: CardValue | null; // Snapshot of vote at the moment of reveal
   status: 'online' | 'offline';
   joinedAt: number;
   isBot?: boolean;

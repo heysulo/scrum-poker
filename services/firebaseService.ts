@@ -26,7 +26,6 @@ const initDummyData = () => {
         const participants: Record<string, Participant> = {};
         for (let i = 0; i < count; i++) {
             const botId = `bot-dummy-${startId + i}`;
-            // Restrict bot votes to 1, 2, 3, 5, 8
             const randomVote = BOT_ALLOWED_VOTES[Math.floor(Math.random() * BOT_ALLOWED_VOTES.length)];
             
             participants[botId] = {
@@ -91,36 +90,34 @@ const simulateBotVotes = (sessionId: string) => {
   const session = MOCK_SESSIONS[sessionId];
   if (!session) return;
 
-  // Get all bots that need to vote
-  const botsToVote = Object.values(session.participants).filter(p => p.isBot && p.vote === null);
+  // Get all bots
+  const bots = Object.values(session.participants).filter(p => p.isBot);
+  if (bots.length === 0) return;
 
-  if (botsToVote.length === 0) return;
-
-  // We need to ensure they ALL vote, but staggered slightly
-  botsToVote.forEach((p) => {
-     // 1000ms to 10000ms max (1s - 10s)
-     const delay = Math.floor(Math.random() * 9000) + 1000;
-     
-     setTimeout(() => {
-        // Re-fetch session state inside timeout to ensure validity
-        const currentSession = MOCK_SESSIONS[sessionId];
-        
-        // Robust check: Session exists, not revealed, bot still exists, and bot hasn't voted yet
-        if (currentSession && !currentSession.isRevealed && currentSession.participants[p.id]) {
-            if (currentSession.participants[p.id].vote === null) {
-                const randomCard = BOT_ALLOWED_VOTES[Math.floor(Math.random() * BOT_ALLOWED_VOTES.length)];
-                currentSession.participants[p.id].vote = randomCard;
-                notifySession(sessionId);
+  // Iterate all bots to ensure they vote eventually
+  bots.forEach((p) => {
+     // If bot hasn't voted, schedule a vote
+     if (p.vote === null) {
+         // 1000ms to 4000ms (reduced from 9000ms for snappier feel)
+         const delay = Math.floor(Math.random() * 3000) + 1000;
+         
+         setTimeout(() => {
+            const currentSession = MOCK_SESSIONS[sessionId];
+            if (currentSession && !currentSession.isRevealed && currentSession.participants[p.id]) {
+                if (currentSession.participants[p.id].vote === null) {
+                    const randomCard = BOT_ALLOWED_VOTES[Math.floor(Math.random() * BOT_ALLOWED_VOTES.length)];
+                    currentSession.participants[p.id].vote = randomCard;
+                    notifySession(sessionId);
+                }
             }
-        }
-     }, delay);
+         }, delay);
+     }
   });
 };
 
 // --- SERVICE METHODS ---
 
 export const createSession = async (sessionName: string, password: string | null, creatorName: string) => {
-  // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 500));
 
   const sessionId = `room-${Math.floor(Math.random() * 10000)}`;
@@ -136,14 +133,14 @@ export const createSession = async (sessionName: string, password: string | null
 
   const participants: Record<string, Participant> = { [userId]: creator };
 
-  // Add Bots for fun (at least 7)
   const botCount = 8;
   for (let i = 0; i < botCount; i++) {
       const botId = `bot-${i}-${sessionId}`;
+      const randomVote = BOT_ALLOWED_VOTES[Math.floor(Math.random() * BOT_ALLOWED_VOTES.length)];
       participants[botId] = {
           id: botId,
           name: BOT_NAMES[i % BOT_NAMES.length],
-          vote: null, // Ensure they start null to trigger thinking
+          vote: randomVote, 
           status: 'online',
           joinedAt: Date.now(),
           isBot: true
@@ -161,10 +158,7 @@ export const createSession = async (sessionName: string, password: string | null
   };
 
   notifySession(sessionId);
-  
-  // Trigger bots to start voting immediately
-  // Using a small timeout ensures the UI mounts first
-  setTimeout(() => simulateBotVotes(sessionId), 100);
+  // setTimeout(() => simulateBotVotes(sessionId), 100); // Bots already voted in createSession logic above for ease
 
   return { sessionId, userId };
 };
@@ -175,7 +169,6 @@ export const joinSession = async (sessionId: string, passwordInput: string | nul
   const session = MOCK_SESSIONS[sessionId];
   if (!session) throw new Error("Session not found");
   
-  // In mock mode, we ignore actual password checks for simplicity
   const userId = `user-${Math.floor(Math.random() * 10000)}`;
   const participant: Participant = {
     id: userId,
@@ -222,6 +215,12 @@ export const updateRevealState = (sessionId: string, isRevealed: boolean) => {
   const session = MOCK_SESSIONS[sessionId];
   if (session) {
     session.isRevealed = isRevealed;
+    if (isRevealed) {
+        // Snapshot votes to initialRevealVote
+        Object.values(session.participants).forEach(p => {
+            p.initialRevealVote = p.vote;
+        });
+    }
     notifySession(sessionId);
   }
 };
@@ -231,23 +230,22 @@ export const resetSession = async (sessionId: string) => {
   if (session) {
     session.isRevealed = false;
     Object.keys(session.participants).forEach(pid => {
-        // Retain 'Break' status, clear everything else
+        // Clear snapshot
+        session.participants[pid].initialRevealVote = undefined;
+
         if (session.participants[pid].vote !== '☕') {
             session.participants[pid].vote = null;
         }
     });
     notifySession(sessionId);
     
-    // Re-trigger bots for next round (only those who aren't on break)
     setTimeout(() => simulateBotVotes(sessionId), 100);
   }
 };
 
 export const subscribeToSessionList = (callback: (sessions: any[]) => void) => {
   LIST_LISTENERS.push(callback);
-  // Initial call
   notifyList();
-  
   return () => {
     const idx = LIST_LISTENERS.indexOf(callback);
     if (idx !== -1) LIST_LISTENERS.splice(idx, 1);
@@ -257,12 +255,8 @@ export const subscribeToSessionList = (callback: (sessions: any[]) => void) => {
 export const subscribeToSession = (sessionId: string, callback: (data: any) => void) => {
   if (!LISTENERS[sessionId]) LISTENERS[sessionId] = [];
   LISTENERS[sessionId].push(callback);
-  
-  // Initial call
   const session = MOCK_SESSIONS[sessionId];
-  if (session) {
-    callback({ ...session });
-  }
+  if (session) callback({ ...session });
 
   return () => {
     if (!LISTENERS[sessionId]) return;
@@ -272,7 +266,6 @@ export const subscribeToSession = (sessionId: string, callback: (data: any) => v
 };
 
 export const subscribeToConnectionStatus = (callback: (connected: boolean) => void) => {
-  // Mock mode is always 'connected' locally
   callback(true);
   return () => {};
 };

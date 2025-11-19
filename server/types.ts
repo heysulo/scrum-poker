@@ -5,6 +5,7 @@ export interface Participant {
   id: string;
   name: string;
   vote: CardValue | null;
+  initialRevealVote?: CardValue | null;
   status: 'online' | 'offline';
   joinedAt: number;
   isBot?: boolean;

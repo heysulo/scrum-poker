@@ -9,8 +9,6 @@ interface ParticipantListProps {
   userId: string;
   isRevealed: boolean;
   filterVote: CardValue | null;
-  hasChangedVote: boolean;
-  initialRevealVote: CardValue | null;
   isPresenterMode: boolean;
 }
 
@@ -19,7 +17,6 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
   userId, 
   isRevealed, 
   filterVote,
-  initialRevealVote,
   isPresenterMode
 }) => {
   
@@ -32,8 +29,9 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
         const isBreak = p.vote === '☕';
         const isReady = !!p.vote;
         
-        // Changed Vote Logic (Only for "Me" since we track local state)
-        const hasChanged = isMe && isRevealed && initialRevealVote && p.vote !== initialRevealVote;
+        // Changed Vote Logic (Synced across room)
+        // If revealed, and the user has an initial vote recorded, check if current vote differs
+        const hasChanged = isRevealed && p.initialRevealVote && p.vote !== p.initialRevealVote;
         
         // Only show green "Ready" styling if not yet revealed
         const showReadyGreen = isReady && !isRevealed;
@@ -90,7 +88,7 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                         {hasChanged && (
                             <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 flex flex-col items-end opacity-70">
                                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Was</span>
-                                <span className="text-xl font-bold text-slate-500 dark:text-slate-400 line-through decoration-slate-400 decoration-2">{initialRevealVote}</span>
+                                <span className="text-xl font-bold text-slate-500 dark:text-slate-400 line-through decoration-slate-400 decoration-2">{p.initialRevealVote}</span>
                             </div>
                         )}
                         <div className={hasChanged ? "relative z-10" : ""}>
