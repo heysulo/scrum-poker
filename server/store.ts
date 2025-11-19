@@ -4,9 +4,9 @@ import { Session, Participant } from './types';
 class Store {
   private sessions: Map<string, Session> = new Map();
 
-  createSession(name: string, creatorName: string, password?: string): { sessionId: string, userId: string, session: Session } {
+  createSession(name: string, creatorName: string, creatorId: string, password?: string): { sessionId: string, userId: string, session: Session } {
     const sessionId = `room-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
-    const userId = `user-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
+    const userId = creatorId; // Use the provided persistent ID
 
     const creator: Participant = {
       id: userId,
@@ -35,7 +35,6 @@ class Store {
     return this.sessions.get(sessionId);
   }
 
-  // Returns session data without sensitive info (password)
   getPublicSession(sessionId: string): Omit<Session, 'password'> | undefined {
     const session = this.sessions.get(sessionId);
     if (!session) return undefined;
@@ -44,32 +43,32 @@ class Store {
     return publicData;
   }
 
-  // Returns a list of all sessions (summary)
   getSessionsList(): any[] {
     return Array.from(this.sessions.values()).map(s => ({
       id: s.id,
       name: s.name,
       createdAt: s.createdAt,
-      // Only count online participants for the lobby display
       participantsCount: Object.values(s.participants).filter(p => p.status === 'online').length,
       protected: !!s.protected
     })).sort((a, b) => b.createdAt - a.createdAt);
   }
 
-  addParticipant(sessionId: string, name: string): { userId: string, participant: Participant } | null {
+  addParticipant(sessionId: string, name: string, userId: string): { userId: string, participant: Participant } | null {
     const session = this.sessions.get(sessionId);
     if (!session) return null;
 
-    // Check if user with same name exists (handle reconnect/refresh)
-    const existingParticipant = Object.values(session.participants).find(p => p.name === name);
+    // Check if this user ID already exists in the session
+    let participant = session.participants[userId];
     
-    if (existingParticipant) {
-      existingParticipant.status = 'online';
-      return { userId: existingParticipant.id, participant: existingParticipant };
+    if (participant) {
+      // User re-joining with same ID
+      participant.name = name; // Update name if changed
+      participant.status = 'online';
+      return { userId, participant };
     }
 
-    const userId = `user-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
-    const participant: Participant = {
+    // New participant with this ID
+    participant = {
       id: userId,
       name,
       vote: null,
@@ -85,7 +84,6 @@ class Store {
     const session = this.sessions.get(sessionId);
     if (session) {
       delete session.participants[userId];
-      // Optional: Cleanup empty sessions
       if (Object.keys(session.participants).length === 0) {
         this.sessions.delete(sessionId);
       }

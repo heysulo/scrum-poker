@@ -12,11 +12,27 @@ const API_URL = 'http://localhost:4000';
 
 let socket: Socket | null = null;
 
+// Helper to get or create a persistent User ID
+const getPersistentUserId = (): string => {
+  let id = localStorage.getItem('scrum_poker_client_id');
+  if (!id) {
+    // Generate a robust unique ID
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      id = crypto.randomUUID();
+    } else {
+      id = `user-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+    }
+    localStorage.setItem('scrum_poker_client_id', id);
+  }
+  return id;
+};
+
 const getSocket = () => {
   if (!socket) {
     socket = io(API_URL, {
       transports: ['websocket'],
-      autoConnect: true
+      autoConnect: true,
+      // Pass auth/query if needed, but simple emit is fine for now
     });
     socket.on("connect", () => {
       console.log("Socket connected:", socket?.id);
@@ -28,46 +44,52 @@ const getSocket = () => {
 // --- REST API METHODS ---
 
 export const createSession = async (sessionName: string, password: string | null, creatorName: string) => {
+  const userId = getPersistentUserId();
+  
   const res = await fetch(`${API_URL}/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: sessionName, password, creatorName }),
+    body: JSON.stringify({ name: sessionName, password, creatorName, userId }),
   });
+  
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.message || 'Failed to create session');
   }
-  // Backend returns { sessionId, userId, session }
-  // We just need { sessionId, userId } to match firebaseService interface
+  
   const data = await res.json();
-  return { sessionId: data.sessionId, userId: data.userId };
+  // Backend uses our userId, so we return it back or just use local
+  return { sessionId: data.sessionId, userId: userId };
 };
 
 export const joinSession = async (sessionId: string, passwordInput: string | null, userName: string) => {
+  const userId = getPersistentUserId();
+  
   const res = await fetch(`${API_URL}/sessions/${sessionId}/join`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password: passwordInput, userName }),
+    body: JSON.stringify({ password: passwordInput, userName, userId }),
   });
+  
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.message || 'Failed to join session');
   }
-  // Backend returns { userId, session }
+  
   const data = await res.json();
-  return data.userId as string;
+  return userId; // Return the local persistent ID
 };
 
 export const leaveSession = async (sessionId: string, userId: string) => {
+  // userId param is passed from hook, but should match getPersistentUserId()
   await fetch(`${API_URL}/sessions/${sessionId}/leave`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId }),
   });
-  // We don't wait for response or error check strictly here for UX speed
 };
 
-// --- SOCKET EMITTERS (MATCHING FIREBASE SERVICE SIGNATURES) ---
+// --- SOCKET EMITTERS ---
 
 export const castVote = (sessionId: string, userId: string, vote: CardValue | null) => {
   const s = getSocket();
@@ -78,8 +100,6 @@ export const updateRevealState = (sessionId: string, isRevealed: boolean) => {
   const s = getSocket();
   if (isRevealed) {
     s.emit("reveal_cards", { sessionId });
-  } else {
-    // Usually 'reset' handles hiding
   }
 };
 
@@ -91,8 +111,6 @@ export const resetSession = (sessionId: string) => {
 // --- SUBSCRIPTIONS ---
 
 export const subscribeToSessionList = (callback: (sessions: any[]) => void) => {
-  // The real backend might not push session lists via socket for scalability.
-  // We'll fetch immediately and then poll every 3 seconds.
   const fetchSessions = async () => {
     try {
       const res = await fetch(`${API_URL}/sessions`);
@@ -113,9 +131,11 @@ export const subscribeToSessionList = (callback: (sessions: any[]) => void) => {
 
 export const subscribeToSession = (sessionId: string, callback: (data: any) => void) => {
   const s = getSocket();
+  const userId = getPersistentUserId();
   
-  // Join the socket room to get updates
-  s.emit("join_room", { sessionId, userId: "listener", name: "Observer" });
+  // Join the socket room with the persistent User ID
+  // Name is optional here as it's already in the store via joinSession
+  s.emit("join_room", { sessionId, userId, name: localStorage.getItem('scrum_poker_username') || 'User' });
 
   const handler = (data: any) => {
     callback(data);

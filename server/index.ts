@@ -1,3 +1,4 @@
+
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -32,18 +33,18 @@ app.get('/sessions', (req, res) => {
 
 // Create Session
 app.post('/sessions', (req, res) => {
-  const { name, password, creatorName } = req.body;
-  if (!name || !creatorName) {
-    return res.status(400).json({ message: 'Missing name or creatorName' });
+  const { name, password, creatorName, userId } = req.body;
+  if (!name || !creatorName || !userId) {
+    return res.status(400).json({ message: 'Missing name, creatorName, or userId' });
   }
-  const result = store.createSession(name, creatorName, password);
+  const result = store.createSession(name, creatorName, userId, password);
   res.status(201).json(result);
 });
 
 // Join Session
 app.post('/sessions/:id/join', (req, res) => {
   const { id } = req.params;
-  const { password, userName } = req.body;
+  const { password, userName, userId } = req.body;
 
   const session = store.getSession(id);
   if (!session) {
@@ -54,16 +55,16 @@ app.post('/sessions/:id/join', (req, res) => {
     return res.status(401).json({ message: 'Invalid password' });
   }
 
-  if (!userName) {
-    return res.status(400).json({ message: 'Username is required' });
+  if (!userName || !userId) {
+    return res.status(400).json({ message: 'Username and UserId are required' });
   }
 
-  const result = store.addParticipant(id, userName);
+  const result = store.addParticipant(id, userName, userId);
   if (!result) {
      return res.status(500).json({ message: 'Failed to join session' });
   }
 
-  // Return session data along with new userId
+  // Return session data along with the userId (confirming it)
   const publicSession = store.getPublicSession(id);
   res.json({ userId: result.userId, session: publicSession });
 });
