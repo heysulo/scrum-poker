@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Lock, LogIn, RefreshCw, Terminal, Search, Users, Clock } from 'lucide-react';
+import { Plus, Lock, LogIn, RefreshCw, Terminal, Search, Users, Clock, CheckCircle2 } from 'lucide-react';
 import { createSession, joinSession, subscribeToSessionList, getSession } from '../services/api';
 
 interface LobbyProps {
@@ -30,6 +30,9 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
   const [joinSessionId, setJoinSessionId] = useState('');
   const [joinSessionPassword, setJoinSessionPassword] = useState('');
   const [selectedSessionProtected, setSelectedSessionProtected] = useState(false);
+  
+  // Room Preview State
+  const [roomPreview, setRoomPreview] = useState<{name: string, participantsCount: number} | null>(null);
 
   // Persist username changes
   useEffect(() => {
@@ -41,19 +44,37 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
       if (initialRoomId) {
           setJoinSessionId(initialRoomId);
           setActiveTab('join');
-          
-          // Check if the room is protected
-          getSession(initialRoomId)
-            .then(session => {
-                setSelectedSessionProtected(!!session.protected);
-            })
-            .catch(err => {
-                console.error("Failed to verify session:", err);
-                // Not setting error here to allow user to try anyway, 
-                // or could set "Room not found" error.
-            });
+          // The logic to fetch details is now handled by the joinSessionId effect below
       }
   }, [initialRoomId]);
+
+  // Live Room Preview
+  useEffect(() => {
+      const fetchPreview = async () => {
+          if (joinSessionId.length < 3) {
+              setRoomPreview(null);
+              setSelectedSessionProtected(false);
+              return;
+          }
+          
+          try {
+              const session = await getSession(joinSessionId);
+              setRoomPreview({
+                  name: session.name,
+                  participantsCount: session.participantsCount
+              });
+              setSelectedSessionProtected(!!session.protected);
+              setError(null);
+          } catch (err) {
+              setRoomPreview(null);
+              setSelectedSessionProtected(false);
+              // We don't set error here to avoid annoying red text while typing
+          }
+      };
+
+      const timeoutId = setTimeout(fetchPreview, 500);
+      return () => clearTimeout(timeoutId);
+  }, [joinSessionId]);
 
   // Listen for session list updates
   useEffect(() => {
@@ -282,8 +303,22 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
                                 required
                             />
                         </div>
+                        
+                        {/* Room Preview Banner */}
+                        {roomPreview && (
+                             <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                                <div className="bg-green-100 dark:bg-green-800/50 p-2 rounded-lg text-green-600 dark:text-green-400">
+                                    <CheckCircle2 size={16} />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-bold text-green-900 dark:text-green-100">{roomPreview.name}</div>
+                                    <div className="text-xs text-green-700 dark:text-green-300 flex items-center gap-1"><Users size={10}/> {roomPreview.participantsCount} Online</div>
+                                </div>
+                            </div>
+                        )}
+
                         {(activeTab === 'join' && (!joinSessionId || selectedSessionProtected)) && (
-                            <div className="space-y-2">
+                            <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex justify-between">
                                     Password <span className="text-slate-400 font-normal">(If required)</span>
                                 </label>
