@@ -1,11 +1,16 @@
 
+/*
 import { io, Socket } from "socket.io-client";
 import { CardValue, Session } from "../types";
 
-// Configuration
-const API_URL = 'http://localhost:4000'; // Backend URL
+// ------------------------------------------------------------------
+// REAL BACKEND SERVICE (Inactive in Mock Mode)
+// This file is currently commented out to prevent "socket.io-client"
+// import errors since we are running in Mock Mode without that dependency.
+// Uncomment this file when you are ready to connect to the real Node.js backend.
+// ------------------------------------------------------------------
 
-// --- REST API ---
+const API_URL = 'http://localhost:4000'; 
 
 export const api = {
   async getSessions(): Promise<any[]> {
@@ -58,8 +63,6 @@ export const api = {
   }
 };
 
-// --- SOCKET.IO SERVICE ---
-
 class SocketService {
   private socket: Socket | null = null;
 
@@ -73,14 +76,6 @@ class SocketService {
 
     this.socket.on("connect", () => {
       console.log("Socket connected:", this.socket?.id);
-    });
-
-    this.socket.on("disconnect", () => {
-      console.log("Socket disconnected");
-    });
-
-    this.socket.on("error", (err: any) => {
-      console.error("Socket error:", err);
     });
   }
 
@@ -118,3 +113,8 @@ class SocketService {
 }
 
 export const socketService = new SocketService();
+*/
+
+// Export empty placeholders to satisfy build if referenced anywhere (though they shouldn't be)
+export const api = {};
+export const socketService = {};

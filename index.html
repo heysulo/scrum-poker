@@ -41,20 +41,22 @@
 {
   "imports": {
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
-    "express": "https://aistudiocdn.com/express@^5.1.0",
-    "cors": "https://aistudiocdn.com/cors@^2.8.5",
     "socket.io": "https://aistudiocdn.com/socket.io@^4.8.1",
+    "express": "https://aistudiocdn.com/express@^5.1.0",
     "http": "https://aistudiocdn.com/http@^0.0.1-security",
-    "socket.io-client": "https://aistudiocdn.com/socket.io-client@^4.8.1"
+    "cors": "https://aistudiocdn.com/cors@^2.8.5"
   }
 }
 </script>
 </head>
   <body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50 h-screen overflow-hidden transition-colors duration-300">
     <div id="root" class="h-full"></div>
+    <!-- Main Entry Point -->
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

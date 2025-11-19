@@ -14,8 +14,8 @@ const io = new Server(httpServer, {
   }
 });
 
-app.use(cors() as express.RequestHandler);
-app.use(express.json());
+app.use(cors() as any);
+app.use(express.json() as any);
 
 const PORT = process.env.PORT || 4000;
 
