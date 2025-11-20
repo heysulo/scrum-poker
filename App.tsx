@@ -16,6 +16,7 @@ const App: React.FC = () => {
   
   // Connection State
   const [isConnected, setIsConnected] = useState(true);
+  const [showBanner, setShowBanner] = useState(false);
   
   // Deep Link State
   const [initialRoomId, setInitialRoomId] = useState<string | undefined>(undefined);
@@ -38,6 +39,22 @@ const App: React.FC = () => {
     });
     return () => unsubscribe();
   }, []);
+
+  // Debounce the disconnected banner to prevent flicker on load
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+
+    if (isConnected) {
+      setShowBanner(false);
+    } else {
+      // Wait 2 seconds before showing banner to allow for initial connection latency
+      timeout = setTimeout(() => {
+        setShowBanner(true);
+      }, 2000);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [isConnected]);
 
   // Apply Theme
   useEffect(() => {
@@ -76,7 +93,7 @@ const App: React.FC = () => {
     <div className="h-screen flex flex-col bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-50 via-slate-50 to-white dark:from-slate-800 dark:via-slate-900 dark:to-black text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-300 relative">
         
         {/* Disconnection Banner (Global) */}
-        {!isConnected && (
+        {showBanner && (
           <div className="absolute top-0 left-0 right-0 bg-red-500 text-white py-2 px-4 text-center text-sm font-bold flex items-center justify-center gap-2 animate-in slide-in-from-top-full z-[60] shadow-lg">
               <WifiOff size={16} />
               <span>Disconnected: Cannot reach backend server. Reconnecting...</span>
