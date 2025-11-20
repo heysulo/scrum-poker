@@ -97,6 +97,19 @@ export const leaveSession = async (sessionId: string, userId: string) => {
   });
 };
 
+export const kickParticipant = async (sessionId: string, userIdToKick: string, requesterId: string) => {
+  const res = await fetch(`${API_URL}/sessions/${sessionId}/kick`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: userIdToKick, requesterId }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to kick participant');
+  }
+};
+
 // --- SOCKET EMITTERS ---
 
 export const castVote = (sessionId: string, userId: string, vote: CardValue | null) => {

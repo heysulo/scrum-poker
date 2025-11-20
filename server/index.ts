@@ -101,7 +101,41 @@ app.post('/sessions/:id/leave', (req, res) => {
   
   store.removeParticipant(id, userId);
   logger.info(`[API] User ${userId} left session ${id}`);
+  
+  // Broadcast update
+  const session = store.getPublicSession(id);
+  if (session) {
+    io.to(id).emit('session_update', session);
+  }
+  
   res.status(200).json({ message: 'Left session' });
+});
+
+// Kick Participant
+app.post('/sessions/:id/kick', (req, res) => {
+  const { id } = req.params;
+  const { userId, requesterId } = req.body;
+
+  const session = store.getSession(id);
+  if (!session) {
+    return res.status(404).json({ message: 'Session not found' });
+  }
+
+  if (session.creatorId !== requesterId) {
+    logger.warn(`[API] Kick failed: Requester ${requesterId} is not admin of session ${id}`);
+    return res.status(403).json({ message: 'Only the session admin can kick participants' });
+  }
+
+  store.removeParticipant(id, userId);
+  logger.info(`[API] Admin ${requesterId} kicked user ${userId} from session ${id}`);
+
+  // Broadcast update
+  const updatedSession = store.getPublicSession(id);
+  if (updatedSession) {
+    io.to(id).emit('session_update', updatedSession);
+  }
+  
+  res.json({ success: true });
 });
 
 httpServer.listen(PORT, () => {

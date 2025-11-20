@@ -41,9 +41,19 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
     handleReveal,
     handleReset,
     handleLeaveGame,
+    handleKick,
     isAdmin,
-    isSpectator
+    isSpectator,
+    kicked,
+    creatorId
   } = usePokerGame(sessionId, userId, isAutoRevealEnabled, initialTimerValue);
+
+  // Redirect to lobby if kicked
+  useEffect(() => {
+    if (kicked) {
+        onLeave(); // Simple leave for now, could show a "You were kicked" toast in App.tsx via a callback
+    }
+  }, [kicked, onLeave]);
 
   // Clear filter on reset
   const wrappedHandleReset = () => {
@@ -143,6 +153,7 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
             isRevealed={isRevealed}
             handleReveal={handleReveal}
             handleReset={wrappedHandleReset}
+            isAdmin={isAdmin}
           />
 
           <Statistics 
@@ -158,7 +169,9 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
             isRevealed={isRevealed}
             filterVote={filterVote}
             isPresenterMode={isPresenterMode}
-            sessionCreatorId={isAdmin ? userId : undefined} // Pass ID to identify admin visually if needed, or just handle inside
+            sessionCreatorId={creatorId || undefined}
+            isAdmin={isAdmin}
+            onKick={handleKick}
           />
 
           {/* Spacer for footer */}

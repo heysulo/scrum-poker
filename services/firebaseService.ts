@@ -210,6 +210,20 @@ export const leaveSession = async (sessionId: string, userId: string) => {
   }
 };
 
+export const kickParticipant = async (sessionId: string, userIdToKick: string, requesterId: string) => {
+  const session = MOCK_SESSIONS[sessionId];
+  if (!session) throw new Error("Session not found");
+  
+  if (session.creatorId !== requesterId) {
+      throw new Error("Only admin can kick participants");
+  }
+
+  if (session.participants[userIdToKick]) {
+      delete session.participants[userIdToKick];
+      notifySession(sessionId);
+  }
+};
+
 export const castVote = (sessionId: string, userId: string, vote: CardValue | null) => {
   const session = MOCK_SESSIONS[sessionId];
   if (session && session.participants[userId]) {

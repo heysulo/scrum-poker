@@ -5,7 +5,8 @@ import {
   castVote, 
   updateRevealState, 
   resetSession,
-  leaveSession
+  leaveSession,
+  kickParticipant
 } from '../services/api';
 import { Participant, CardValue } from '../types';
 import { FIBONACCI_DECK } from '../constants';
@@ -26,6 +27,7 @@ export const usePokerGame = (
   const [sessionName, setSessionName] = useState('Loading...');
   const [creatorId, setCreatorId] = useState<string | null>(null);
   const [autoRevealTimer, setAutoRevealTimer] = useState(initialTimerValue);
+  const [kicked, setKicked] = useState(false);
   
   // 1. Connection & Subscription
   useEffect(() => {
@@ -46,6 +48,16 @@ export const usePokerGame = (
       unsubscribe();
     };
   }, [sessionId]);
+
+  // Check if I was kicked (removed from participant list while session exists)
+  useEffect(() => {
+    if (participants.length > 0) {
+      const me = participants.find(p => p.id === userId);
+      if (!me) {
+        setKicked(true);
+      }
+    }
+  }, [participants, userId]);
 
   const myParticipant = participants.find(p => p.id === userId);
   const selectedCard = myParticipant?.vote || null;
@@ -76,6 +88,12 @@ export const usePokerGame = (
 
   const handleLeaveGame = () => {
       leaveSession(sessionId, userId);
+  };
+
+  const handleKick = (participantId: string) => {
+      if (isAdmin) {
+          kickParticipant(sessionId, participantId, userId);
+      }
   };
 
   // 4. Auto Reveal Timer
@@ -169,7 +187,10 @@ export const usePokerGame = (
     handleReveal,
     handleReset,
     handleLeaveGame,
+    handleKick,
     isAdmin,
-    isSpectator
+    isSpectator,
+    kicked,
+    creatorId // Exported now
   };
 };
