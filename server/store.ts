@@ -27,7 +27,8 @@ class Store {
       isRevealed: false,
       participants: { [userId]: creator },
       protected: !!password,
-      password
+      password,
+      allowReveal: false // Default: Only admin can reveal
     };
 
     this.sessions.set(sessionId, session);

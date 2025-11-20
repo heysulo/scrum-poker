@@ -6,7 +6,8 @@ import {
   updateRevealState, 
   resetSession,
   leaveSession,
-  kickParticipant
+  kickParticipant,
+  updateSessionSettings
 } from '../services/api';
 import { Participant, CardValue } from '../types';
 import { FIBONACCI_DECK } from '../constants';
@@ -26,6 +27,7 @@ export const usePokerGame = (
   const [isRevealed, setIsRevealed] = useState(false);
   const [sessionName, setSessionName] = useState('Loading...');
   const [creatorId, setCreatorId] = useState<string | null>(null);
+  const [allowReveal, setAllowReveal] = useState(false);
   const [autoRevealTimer, setAutoRevealTimer] = useState(initialTimerValue);
   const [kicked, setKicked] = useState(false);
   
@@ -36,6 +38,7 @@ export const usePokerGame = (
             setSessionName(data.name);
             setCreatorId(data.creatorId);
             setIsRevealed(data.isRevealed);
+            setAllowReveal(!!data.allowReveal);
             if (data.participants) {
                 setParticipants(Object.values(data.participants));
             } else {
@@ -93,6 +96,12 @@ export const usePokerGame = (
   const handleKick = (participantId: string) => {
       if (isAdmin) {
           kickParticipant(sessionId, participantId, userId);
+      }
+  };
+
+  const handleTogglePermissions = () => {
+      if (isAdmin) {
+          updateSessionSettings(sessionId, !allowReveal);
       }
   };
 
@@ -188,8 +197,10 @@ export const usePokerGame = (
     handleReset,
     handleLeaveGame,
     handleKick,
+    handleTogglePermissions,
     isAdmin,
     isSpectator,
+    allowReveal,
     kicked,
     creatorId // Exported now
   };

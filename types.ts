@@ -21,6 +21,7 @@ export interface Session {
   isRevealed: boolean;
   participants: Record<string, Participant>;
   protected?: boolean; // Indicates if password is required
+  allowReveal?: boolean; // Setting: Allow non-admins to reveal/reset
 }
 
 export interface UserState {

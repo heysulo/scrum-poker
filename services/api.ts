@@ -129,6 +129,11 @@ export const resetSession = (sessionId: string) => {
   s.emit("reset_round", { sessionId });
 };
 
+export const updateSessionSettings = (sessionId: string, allowReveal: boolean) => {
+  const s = getSocket();
+  s.emit("update_settings", { sessionId, allowReveal });
+};
+
 // --- SUBSCRIPTIONS ---
 
 export const subscribeToSessionList = (callback: (sessions: any[]) => void) => {

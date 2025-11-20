@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Timer, Minus, Plus, RotateCcw, Eye, Lock } from 'lucide-react';
+import { Timer, Minus, Plus, RotateCcw, Eye, Lock, Unlock, Shield } from 'lucide-react';
 
 interface ControlsProps {
   isAutoRevealEnabled: boolean;
@@ -13,6 +13,8 @@ interface ControlsProps {
   handleReveal: () => void;
   handleReset: () => void;
   isAdmin?: boolean;
+  allowReveal?: boolean;
+  onTogglePermissions?: () => void;
 }
 
 export const Controls: React.FC<ControlsProps> = ({
@@ -25,17 +27,42 @@ export const Controls: React.FC<ControlsProps> = ({
   isRevealed,
   handleReveal,
   handleReset,
-  isAdmin = false
+  isAdmin = false,
+  allowReveal = false,
+  onTogglePermissions
 }) => {
+  
+  const canControl = isAdmin || allowReveal;
+
+  // Hide entire panel if user has no control rights
+  if (!canControl) {
+      return null;
+  }
+
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white/60 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-200 dark:border-slate-700/30 relative overflow-hidden shadow-sm dark:shadow-none transition-colors duration-300">
+    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white/60 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-200 dark:border-slate-700/30 relative overflow-hidden shadow-sm dark:shadow-none transition-colors duration-300">
       
-      <div className="z-10">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Estimation Area</h2>
-        <p className="text-slate-500 dark:text-slate-400">Vote on the complexity of the current user story.</p>
+      <div className="z-10 flex flex-col gap-1">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            Estimation Area
+            {isAdmin && (
+                <button 
+                    onClick={onTogglePermissions}
+                    className={`ml-2 p-1.5 rounded-lg border transition-all ${allowReveal ? 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-400' : 'bg-white border-slate-200 text-slate-400 dark:bg-slate-800 dark:border-slate-600'}`}
+                    title={allowReveal ? "Everyone can reveal/reset" : "Only Admin can reveal/reset"}
+                >
+                    {allowReveal ? <Unlock size={14} /> : <Lock size={14} />}
+                </button>
+            )}
+        </h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">
+            {isAdmin 
+                ? "Manage the round and permissions." 
+                : "Vote on the complexity of the current user story."}
+        </p>
       </div>
       
-      <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto z-10">
+      <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto z-10">
         {/* Auto Reveal Toggle */}
         <div 
           className={`
@@ -96,32 +123,28 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
 
         <button 
-          onClick={isAdmin ? (isRevealed ? handleReset : handleReveal) : undefined}
-          disabled={!isAdmin}
+          onClick={isRevealed ? handleReset : handleReveal}
           className={`relative overflow-hidden flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-semibold transition-all active:scale-95 ${
-            !isAdmin 
-                ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-600' 
-                : allVoted && !isRevealed
-                    ? 'bg-green-600 hover:bg-green-500 text-white shadow-[0_0_20px_rgba(34,197,94,0.4)] border border-green-400/50' 
-                    : isRevealed 
-                        ? 'bg-white dark:bg-slate-700 hover:bg-red-600 dark:hover:bg-red-600 text-slate-700 dark:text-white hover:text-white dark:hover:text-white border border-slate-200 dark:border-slate-600 hover:border-red-500 dark:hover:border-red-500 shadow-sm dark:shadow-none'
-                        : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20'
+            allVoted && !isRevealed
+                ? 'bg-green-600 hover:bg-green-500 text-white shadow-[0_0_20px_rgba(34,197,94,0.4)] border border-green-400/50' 
+                : isRevealed 
+                    ? 'bg-white dark:bg-slate-700 hover:bg-red-600 dark:hover:bg-red-600 text-slate-700 dark:text-white hover:text-white dark:hover:text-white border border-slate-200 dark:border-slate-600 hover:border-red-500 dark:hover:border-red-500 shadow-sm dark:shadow-none'
+                    : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20'
           }`}
-          title={!isAdmin ? "Only the Admin can use this" : ""}
         >
-          {isAutoRevealEnabled && allVoted && !isRevealed && isAdmin && (
+          {isAutoRevealEnabled && allVoted && !isRevealed && (
             <div 
               className="absolute inset-0 bg-black/20 z-0 transition-all duration-1000 ease-linear origin-left"
               style={{ width: `${((initialTimerValue - autoRevealTimer) / initialTimerValue) * 100}%` }}
             />
           )}
 
-          {allVoted && !isRevealed && isAdmin && (
+          {allVoted && !isRevealed && (
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer skew-x-12 pointer-events-none z-0"></div>
           )}
 
           <div className="relative z-10 flex items-center gap-2">
-            {!isAdmin && <Lock size={16} />}
+            {!isAdmin && !allowReveal && <Lock size={16} />}
             {isRevealed ? (
               <><RotateCcw size={20}/> Start New Round</>
             ) : (

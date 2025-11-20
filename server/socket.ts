@@ -83,6 +83,16 @@ export const setupSocket = (io: Server) => {
       }
     });
 
+    // Update Settings
+    socket.on('update_settings', ({ sessionId, allowReveal }) => {
+      logger.info(`[Socket] update_settings: Session ${sessionId} allowReveal=${allowReveal}`);
+      const session = store.getSession(sessionId);
+      if (session) {
+        session.allowReveal = !!allowReveal;
+        io.to(sessionId).emit('session_update', store.getPublicSession(sessionId));
+      }
+    });
+
     // Handle Disconnect
     socket.on('disconnect', () => {
       logger.info(`[Socket] Client disconnected: ${socket.id}`);

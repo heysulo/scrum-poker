@@ -22,4 +22,5 @@ export interface Session {
   participants: Record<string, Participant>;
   protected: boolean;
   password?: string; // Stored internally, stripped before sending to client
+  allowReveal?: boolean;
 }

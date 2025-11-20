@@ -15,7 +15,7 @@ interface PokerRoomProps {
   sessionId: string;
   userId: string;
   userName: string;
-  onLeave: () => void;
+  onLeave: (reason?: string) => void;
 }
 
 export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userName, onLeave }) => {
@@ -42,8 +42,10 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
     handleReset,
     handleLeaveGame,
     handleKick,
+    handleTogglePermissions,
     isAdmin,
     isSpectator,
+    allowReveal,
     kicked,
     creatorId
   } = usePokerGame(sessionId, userId, isAutoRevealEnabled, initialTimerValue);
@@ -51,7 +53,7 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
   // Redirect to lobby if kicked
   useEffect(() => {
     if (kicked) {
-        onLeave(); // Simple leave for now, could show a "You were kicked" toast in App.tsx via a callback
+        onLeave('kicked');
     }
   }, [kicked, onLeave]);
 
@@ -142,7 +144,6 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
       <main className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
         <div className="max-w-5xl mx-auto space-y-8">
           
-          {/* Only show controls for voting actions, maybe restricted to Admin later, but useful for all now */}
           <Controls 
             isAutoRevealEnabled={isAutoRevealEnabled}
             setIsAutoRevealEnabled={setIsAutoRevealEnabled}
@@ -154,6 +155,8 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
             handleReveal={handleReveal}
             handleReset={wrappedHandleReset}
             isAdmin={isAdmin}
+            allowReveal={allowReveal}
+            onTogglePermissions={handleTogglePermissions}
           />
 
           <Statistics 

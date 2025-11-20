@@ -50,7 +50,8 @@ const initDummyData = () => {
         creatorId: systemCreatorId,
         createdAt: now - 3600000,
         isRevealed: false,
-        participants: generateBots(100, 8) // 8 Bots
+        participants: generateBots(100, 8), // 8 Bots
+        allowReveal: false
     };
 
     // Room 2: Design Review (Protected)
@@ -62,7 +63,8 @@ const initDummyData = () => {
         createdAt: now - 7200000,
         isRevealed: true,
         protected: true,
-        participants: generateBots(200, 8) // 8 Bots
+        participants: generateBots(200, 8), // 8 Bots
+        allowReveal: false
     };
 };
 
@@ -161,7 +163,8 @@ export const createSession = async (sessionName: string, password: string | null
     createdAt: Date.now(),
     isRevealed: false,
     participants: participants,
-    protected: !!password
+    protected: !!password,
+    allowReveal: false
   };
 
   notifySession(sessionId);
@@ -265,6 +268,14 @@ export const resetSession = async (sessionId: string) => {
     notifySession(sessionId);
     
     setTimeout(() => simulateBotVotes(sessionId), 100);
+  }
+};
+
+export const updateSessionSettings = (sessionId: string, allowReveal: boolean) => {
+  const session = MOCK_SESSIONS[sessionId];
+  if (session) {
+    session.allowReveal = allowReveal;
+    notifySession(sessionId);
   }
 };
 

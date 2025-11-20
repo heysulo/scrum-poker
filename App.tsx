@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lobby } from './components/Lobby';
 import { PokerRoom } from './components/PokerRoom';
-import { Sun, Moon, Monitor, Check, ChevronDown, WifiOff } from 'lucide-react';
+import { Sun, Moon, Monitor, Check, ChevronDown, WifiOff, AlertCircle } from 'lucide-react';
 import { subscribeToConnectionStatus } from './services/api';
 
 const App: React.FC = () => {
@@ -17,6 +17,7 @@ const App: React.FC = () => {
   // Connection State
   const [isConnected, setIsConnected] = useState(true);
   const [showBanner, setShowBanner] = useState(false);
+  const [kickNotification, setKickNotification] = useState(false);
   
   // Deep Link State
   const [initialRoomId, setInitialRoomId] = useState<string | undefined>(undefined);
@@ -82,11 +83,16 @@ const App: React.FC = () => {
   const handleJoinSession = (sessionId: string, userId: string, userName: string) => {
       setCurrentUser({ id: userId, name: userName });
       setCurrentSessionId(sessionId);
+      setKickNotification(false);
   };
 
-  const handleLeaveSession = () => {
+  const handleLeaveSession = (reason?: string) => {
       setCurrentSessionId(null);
-      // Optional: keep user identity or clear it? Keep for convenience.
+      if (reason === 'kicked') {
+          setKickNotification(true);
+          // Hide notification after 5 seconds
+          setTimeout(() => setKickNotification(false), 5000);
+      }
   };
 
   return (
@@ -97,6 +103,14 @@ const App: React.FC = () => {
           <div className="absolute top-0 left-0 right-0 bg-red-500 text-white py-2 px-4 text-center text-sm font-bold flex items-center justify-center gap-2 animate-in slide-in-from-top-full z-[60] shadow-lg">
               <WifiOff size={16} />
               <span>Disconnected: Cannot reach backend server. Reconnecting...</span>
+          </div>
+        )}
+
+        {/* Kick Notification Banner */}
+        {kickNotification && (
+          <div className="absolute top-0 left-0 right-0 bg-red-500 text-white py-3 px-4 text-center text-sm font-bold flex items-center justify-center gap-2 animate-in slide-in-from-top-full z-[60] shadow-lg">
+              <AlertCircle size={20} />
+              <span>You were kicked from the session by the administrator.</span>
           </div>
         )}
 
