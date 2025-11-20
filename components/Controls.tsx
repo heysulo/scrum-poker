@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Timer, Minus, Plus, RotateCcw, Eye, Lock, Unlock, Shield } from 'lucide-react';
+import { Timer, Minus, Plus, RotateCcw, Eye, Lock, Unlock, Shield, ShieldAlert } from 'lucide-react';
 
 interface ControlsProps {
   isAutoRevealEnabled: boolean;
@@ -15,6 +15,7 @@ interface ControlsProps {
   isAdmin?: boolean;
   allowReveal?: boolean;
   onTogglePermissions?: () => void;
+  isTempAdmin?: boolean;
 }
 
 export const Controls: React.FC<ControlsProps> = ({
@@ -29,7 +30,8 @@ export const Controls: React.FC<ControlsProps> = ({
   handleReset,
   isAdmin = false,
   allowReveal = false,
-  onTogglePermissions
+  onTogglePermissions,
+  isTempAdmin = false
 }) => {
   
   const canControl = isAdmin || allowReveal;
@@ -45,6 +47,12 @@ export const Controls: React.FC<ControlsProps> = ({
       <div className="z-10 flex flex-col gap-1">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             Estimation Area
+            {isTempAdmin && (
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200" title="Creator is offline. Temporary Admin rights active.">
+                    <ShieldAlert size={10} />
+                    <span>TEMP ADMIN</span>
+                </div>
+            )}
             {isAdmin && (
                 <button 
                     onClick={onTogglePermissions}

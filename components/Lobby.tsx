@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, Lock, LogIn, RefreshCw, Terminal, Search, Users, Clock, CheckCircle2, Eye } from 'lucide-react';
-import { createSession, joinSession, subscribeToSessionList, getSession } from '../services/api';
+import { createSession, joinSession, subscribeToSessionList, getSession } from '../services/firebaseService';
 
 interface LobbyProps {
   onJoin: (sessionId: string, userId: string, userName: string) => void;

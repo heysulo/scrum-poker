@@ -1,4 +1,3 @@
-
 import { CardValue, Participant, Session } from '../types';
 import { FIBONACCI_DECK } from '../constants';
 
@@ -201,7 +200,8 @@ export const getSession = async (sessionId: string) => {
     id: session.id,
     name: session.name,
     protected: !!session.protected,
-    participantsCount: Object.keys(session.participants).length
+    participantsCount: Object.keys(session.participants).length,
+    participants: session.participants
   };
 };
 
