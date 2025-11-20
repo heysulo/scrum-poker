@@ -47,7 +47,8 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
     isSpectator,
     allowReveal,
     kicked,
-    creatorId
+    creatorId,
+    isCreatorOnline
   } = usePokerGame(sessionId, userId, isAutoRevealEnabled, initialTimerValue);
 
   // Redirect to lobby if kicked
@@ -138,6 +139,7 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
         onLeave={onExit}
         isPresenterMode={isPresenterMode}
         setIsPresenterMode={setIsPresenterMode}
+        isTempAdmin={!isCreatorOnline && creatorId !== userId} // Show badge if I am temp admin
       />
 
       {/* Main Content */}

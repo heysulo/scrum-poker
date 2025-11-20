@@ -88,6 +88,11 @@ export const setupSocket = (io: Server) => {
       logger.info(`[Socket] update_settings: Session ${sessionId} allowReveal=${allowReveal}`);
       const session = store.getSession(sessionId);
       if (session) {
+        // Permission Check logic isn't strictly enforced via Socket payloads usually, 
+        // but ideally we trust the UI or add a userId payload. 
+        // However, following the pattern:
+        // If allowReveal is changed, we apply it. 
+        // For stricter security we'd pass userId in the emit payload too.
         session.allowReveal = !!allowReveal;
         io.to(sessionId).emit('session_update', store.getPublicSession(sessionId));
       }

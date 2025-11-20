@@ -121,13 +121,20 @@ app.post('/sessions/:id/kick', (req, res) => {
     return res.status(404).json({ message: 'Session not found' });
   }
 
-  if (session.creatorId !== requesterId) {
-    logger.warn(`[API] Kick failed: Requester ${requesterId} is not admin of session ${id}`);
+  // Check if creator is online
+  const creator = session.participants[session.creatorId];
+  const isCreatorOnline = creator && creator.status === 'online';
+
+  // Permission Check:
+  // 1. Requester is the Creator
+  // 2. OR Creator is offline (Temporary Admin Mode for everyone)
+  if (isCreatorOnline && session.creatorId !== requesterId) {
+    logger.warn(`[API] Kick failed: Requester ${requesterId} is not admin of session ${id} and admin is online`);
     return res.status(403).json({ message: 'Only the session admin can kick participants' });
   }
 
   store.removeParticipant(id, userId);
-  logger.info(`[API] Admin ${requesterId} kicked user ${userId} from session ${id}`);
+  logger.info(`[API] User ${userId} kicked by ${requesterId} from session ${id}`);
 
   // Broadcast update
   const updatedSession = store.getPublicSession(id);

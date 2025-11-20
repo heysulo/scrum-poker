@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Users, Info, LogOut, Eye, EyeOff, Link as LinkIcon, Check, Keyboard, X } from 'lucide-react';
+import { Users, Info, LogOut, Eye, EyeOff, Link as LinkIcon, Check, Keyboard, X, ShieldAlert } from 'lucide-react';
 
 interface HeaderProps {
   sessionName: string;
@@ -9,6 +9,7 @@ interface HeaderProps {
   onLeave: () => void;
   isPresenterMode: boolean;
   setIsPresenterMode: (val: boolean) => void;
+  isTempAdmin?: boolean; // New Prop
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -17,7 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   participantCount, 
   onLeave,
   isPresenterMode,
-  setIsPresenterMode
+  setIsPresenterMode,
+  isTempAdmin
 }) => {
   const [copied, setCopied] = useState(false);
   const [showPresenterConfirm, setShowPresenterConfirm] = useState(false);
@@ -55,7 +57,15 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="font-bold text-xl text-white">S</span>
           </div>
           <div className="flex flex-col">
-            <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-tight hidden sm:block">ScrumSense</h1>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-tight hidden sm:block flex items-center gap-2">
+                ScrumSense
+                {isTempAdmin && (
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200" title="Creator is offline. Temporary Admin rights active.">
+                        <ShieldAlert size={10} />
+                        <span>TEMP ADMIN</span>
+                    </div>
+                )}
+            </h1>
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <Users size={12} /> {participantCount} Online
             </div>

@@ -104,8 +104,8 @@ const simulateBotVotes = (sessionId: string) => {
   bots.forEach((p) => {
      // If bot hasn't voted, schedule a vote
      if (p.vote === null) {
-         // 1000ms to 4000ms (reduced from 9000ms for snappier feel)
-         const delay = Math.floor(Math.random() * 3000) + 1000;
+         // 1000ms to 3000ms
+         const delay = Math.floor(Math.random() * 2000) + 1000;
          
          setTimeout(() => {
             const currentSession = MOCK_SESSIONS[sessionId];
@@ -217,7 +217,10 @@ export const kickParticipant = async (sessionId: string, userIdToKick: string, r
   const session = MOCK_SESSIONS[sessionId];
   if (!session) throw new Error("Session not found");
   
-  if (session.creatorId !== requesterId) {
+  const creator = session.participants[session.creatorId];
+  const isCreatorOnline = creator && creator.status === 'online';
+
+  if (isCreatorOnline && session.creatorId !== requesterId) {
       throw new Error("Only admin can kick participants");
   }
 
@@ -240,12 +243,10 @@ export const updateRevealState = (sessionId: string, isRevealed: boolean) => {
   if (session) {
     session.isRevealed = isRevealed;
     if (isRevealed) {
-        // Logic: If user hasn't voted when revealed, put them on Break
         Object.values(session.participants).forEach(p => {
              if (p.vote === null && p.role !== 'spectator') {
                  p.vote = '☕';
              }
-             // Snapshot votes to initialRevealVote
              p.initialRevealVote = p.vote;
         });
     }
@@ -258,9 +259,7 @@ export const resetSession = async (sessionId: string) => {
   if (session) {
     session.isRevealed = false;
     Object.keys(session.participants).forEach(pid => {
-        // Clear snapshot
         session.participants[pid].initialRevealVote = undefined;
-
         if (session.participants[pid].vote !== '☕') {
             session.participants[pid].vote = null;
         }

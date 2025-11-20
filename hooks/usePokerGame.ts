@@ -65,7 +65,13 @@ export const usePokerGame = (
   const myParticipant = participants.find(p => p.id === userId);
   const selectedCard = myParticipant?.vote || null;
   const isSpectator = myParticipant?.role === 'spectator';
-  const isAdmin = creatorId === userId;
+
+  // --- ADMIN LOGIC ---
+  const creatorParticipant = participants.find(p => p.id === creatorId);
+  const isCreatorOnline = creatorParticipant && creatorParticipant.status === 'online';
+  
+  // User is Admin if they are the Creator, OR if the Creator is offline (Temp Admin)
+  const isAdmin = (creatorId === userId) || !isCreatorOnline;
 
   // Filter only voters for "All Voted" check
   const voters = participants.filter(p => p.role !== 'spectator');
@@ -202,6 +208,7 @@ export const usePokerGame = (
     isSpectator,
     allowReveal,
     kicked,
-    creatorId // Exported now
+    creatorId,
+    isCreatorOnline // Exported for UI feedback
   };
 };
