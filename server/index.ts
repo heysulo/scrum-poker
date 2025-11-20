@@ -45,12 +45,12 @@ app.get('/sessions', (req, res) => {
 
 // Create Session
 app.post('/sessions', (req, res) => {
-  const { name, password, creatorName, userId } = req.body;
+  const { name, password, creatorName, userId, role } = req.body;
   if (!name || !creatorName || !userId) {
     logger.warn('[API] Create session failed: Missing fields');
     return res.status(400).json({ message: 'Missing name, creatorName, or userId' });
   }
-  const result = store.createSession(name, creatorName, userId, password);
+  const result = store.createSession(name, creatorName, userId, password, role);
   logger.info(`[API] Session created: ${result.sessionId} by ${creatorName}`);
   res.status(201).json(result);
 });
@@ -58,7 +58,7 @@ app.post('/sessions', (req, res) => {
 // Join Session
 app.post('/sessions/:id/join', (req, res) => {
   const { id } = req.params;
-  const { password, userName, userId } = req.body;
+  const { password, userName, userId, role } = req.body;
 
   const session = store.getSession(id);
   if (!session) {
@@ -74,7 +74,7 @@ app.post('/sessions/:id/join', (req, res) => {
     return res.status(400).json({ message: 'Username and UserId are required' });
   }
 
-  const result = store.addParticipant(id, userName, userId);
+  const result = store.addParticipant(id, userName, userId, role);
   if (!result) {
      return res.status(500).json({ message: 'Failed to join session' });
   }

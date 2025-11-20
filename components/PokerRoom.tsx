@@ -40,7 +40,9 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
     handleSelectCard,
     handleReveal,
     handleReset,
-    handleLeaveGame
+    handleLeaveGame,
+    isAdmin,
+    isSpectator
   } = usePokerGame(sessionId, userId, isAutoRevealEnabled, initialTimerValue);
 
   // Clear filter on reset
@@ -56,6 +58,8 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
 
   // Keyboard Listener (Global)
   useEffect(() => {
+    if (isSpectator) return; // No voting for spectators
+
     let buffer = '';
     let timeout: ReturnType<typeof setTimeout>;
 
@@ -94,7 +98,7 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
       window.removeEventListener('keydown', handleKeyDown);
       clearTimeout(timeout);
     };
-  }, [handleSelectCard]);
+  }, [handleSelectCard, isSpectator]);
 
   return (
     <div className="h-full flex flex-col">
@@ -128,6 +132,7 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
       <main className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
         <div className="max-w-5xl mx-auto space-y-8">
           
+          {/* Only show controls for voting actions, maybe restricted to Admin later, but useful for all now */}
           <Controls 
             isAutoRevealEnabled={isAutoRevealEnabled}
             setIsAutoRevealEnabled={setIsAutoRevealEnabled}
@@ -153,6 +158,7 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
             isRevealed={isRevealed}
             filterVote={filterVote}
             isPresenterMode={isPresenterMode}
+            sessionCreatorId={isAdmin ? userId : undefined} // Pass ID to identify admin visually if needed, or just handle inside
           />
 
           {/* Spacer for footer */}
@@ -160,14 +166,17 @@ export const PokerRoom: React.FC<PokerRoomProps> = ({ sessionId, userId, userNam
         </div>
       </main>
 
-      <Deck 
-        isRevealed={isRevealed}
-        selectedCard={selectedCard}
-        onSelectCard={handleSelectCard}
-        isFooterHovered={isFooterHovered}
-        setIsFooterHovered={setIsFooterHovered}
-        isPresenterMode={isPresenterMode}
-      />
+      {/* Only show voting deck if NOT a spectator */}
+      {!isSpectator && (
+        <Deck 
+          isRevealed={isRevealed}
+          selectedCard={selectedCard}
+          onSelectCard={handleSelectCard}
+          isFooterHovered={isFooterHovered}
+          setIsFooterHovered={setIsFooterHovered}
+          isPresenterMode={isPresenterMode}
+        />
+      )}
     </div>
   );
 };

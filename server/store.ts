@@ -5,7 +5,7 @@ import { Session, Participant } from './types';
 class Store {
   private sessions: Map<string, Session> = new Map();
 
-  createSession(name: string, creatorName: string, creatorId: string, password?: string): { sessionId: string, userId: string, session: Session } {
+  createSession(name: string, creatorName: string, creatorId: string, password?: string, role: 'voter' | 'spectator' = 'voter'): { sessionId: string, userId: string, session: Session } {
     const sessionId = `room-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
     const userId = creatorId; // Use the provided persistent ID
 
@@ -14,13 +14,15 @@ class Store {
       name: creatorName,
       vote: null,
       status: 'online',
-      joinedAt: Date.now()
+      joinedAt: Date.now(),
+      role: role
     };
 
     const session: Session = {
       id: sessionId,
       name,
       createdBy: creatorName,
+      creatorId: userId,
       createdAt: Date.now(),
       isRevealed: false,
       participants: { [userId]: creator },
@@ -29,7 +31,7 @@ class Store {
     };
 
     this.sessions.set(sessionId, session);
-    logger.debug(`[Store] Created session ${sessionId} (Protected: ${!!password})`);
+    logger.debug(`[Store] Created session ${sessionId} (Protected: ${!!password}) by Admin ${creatorId}`);
     return { sessionId, userId, session };
   }
 
@@ -55,7 +57,7 @@ class Store {
     })).sort((a, b) => b.createdAt - a.createdAt);
   }
 
-  addParticipant(sessionId: string, name: string, userId: string): { userId: string, participant: Participant } | null {
+  addParticipant(sessionId: string, name: string, userId: string, role: 'voter' | 'spectator' = 'voter'): { userId: string, participant: Participant } | null {
     const session = this.sessions.get(sessionId);
     if (!session) return null;
 
@@ -67,17 +69,20 @@ class Store {
       logger.debug(`[Store] User ${name} (${userId}) re-connected to ${sessionId}`);
       participant.name = name; // Update name if changed
       participant.status = 'online';
+      // Update role if they changed it on re-join
+      participant.role = role;
       return { userId, participant };
     }
 
     // New participant with this ID
-    logger.debug(`[Store] New participant ${name} (${userId}) added to ${sessionId}`);
+    logger.debug(`[Store] New participant ${name} (${userId}) added to ${sessionId} as ${role}`);
     participant = {
       id: userId,
       name,
       vote: null,
       status: 'online',
-      joinedAt: Date.now()
+      joinedAt: Date.now(),
+      role: role
     };
 
     session.participants[userId] = participant;

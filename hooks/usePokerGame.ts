@@ -24,6 +24,7 @@ export const usePokerGame = (
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isRevealed, setIsRevealed] = useState(false);
   const [sessionName, setSessionName] = useState('Loading...');
+  const [creatorId, setCreatorId] = useState<string | null>(null);
   const [autoRevealTimer, setAutoRevealTimer] = useState(initialTimerValue);
   
   // 1. Connection & Subscription
@@ -31,6 +32,7 @@ export const usePokerGame = (
     const unsubscribe = subscribeToSession(sessionId, (data) => {
         if (data) {
             setSessionName(data.name);
+            setCreatorId(data.creatorId);
             setIsRevealed(data.isRevealed);
             if (data.participants) {
                 setParticipants(Object.values(data.participants));
@@ -47,11 +49,16 @@ export const usePokerGame = (
 
   const myParticipant = participants.find(p => p.id === userId);
   const selectedCard = myParticipant?.vote || null;
+  const isSpectator = myParticipant?.role === 'spectator';
+  const isAdmin = creatorId === userId;
 
-  const allVoted = participants.length > 0 && participants.every(p => p.vote !== null);
+  // Filter only voters for "All Voted" check
+  const voters = participants.filter(p => p.role !== 'spectator');
+  const allVoted = voters.length > 0 && voters.every(p => p.vote !== null);
 
   // 3. Actions
   const handleSelectCard = (value: CardValue) => {
+    if (isSpectator) return; // Spectators cannot vote
     const newVote = value === selectedCard ? null : value;
     castVote(sessionId, userId, newVote);
   };
@@ -98,7 +105,11 @@ export const usePokerGame = (
   const stats = useMemo(() => {
     if (!isRevealed) return null;
 
-    const allVotes = participants.map(p => p.vote).filter(v => v !== null) as CardValue[];
+    // Only include voters in stats
+    const allVotes = participants
+        .filter(p => p.role !== 'spectator')
+        .map(p => p.vote)
+        .filter(v => v !== null) as CardValue[];
     
     const numericVotes = allVotes
       .map(v => (v === '?' || v === '☕' ? null : parseInt(v)))
@@ -157,6 +168,8 @@ export const usePokerGame = (
     handleSelectCard,
     handleReveal,
     handleReset,
-    handleLeaveGame
+    handleLeaveGame,
+    isAdmin,
+    isSpectator
   };
 };

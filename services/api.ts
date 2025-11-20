@@ -43,13 +43,13 @@ const getSocket = () => {
 
 // --- REST API METHODS ---
 
-export const createSession = async (sessionName: string, password: string | null, creatorName: string) => {
+export const createSession = async (sessionName: string, password: string | null, creatorName: string, role: 'voter' | 'spectator' = 'voter') => {
   const userId = getPersistentUserId();
   
   const res = await fetch(`${API_URL}/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: sessionName, password, creatorName, userId }),
+    body: JSON.stringify({ name: sessionName, password, creatorName, userId, role }),
   });
   
   if (!res.ok) {
@@ -62,13 +62,13 @@ export const createSession = async (sessionName: string, password: string | null
   return { sessionId: data.sessionId, userId: userId };
 };
 
-export const joinSession = async (sessionId: string, passwordInput: string | null, userName: string) => {
+export const joinSession = async (sessionId: string, passwordInput: string | null, userName: string, role: 'voter' | 'spectator' = 'voter') => {
   const userId = getPersistentUserId();
   
   const res = await fetch(`${API_URL}/sessions/${sessionId}/join`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password: passwordInput, userName, userId }),
+    body: JSON.stringify({ password: passwordInput, userName, userId, role }),
   });
   
   if (!res.ok) {

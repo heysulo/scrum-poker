@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Lock, LogIn, RefreshCw, Terminal, Search, Users, Clock, CheckCircle2 } from 'lucide-react';
+import { Plus, Lock, LogIn, RefreshCw, Terminal, Search, Users, Clock, CheckCircle2, Eye } from 'lucide-react';
 import { createSession, joinSession, subscribeToSessionList, getSession } from '../services/api';
 
 interface LobbyProps {
@@ -31,6 +31,9 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
   const [joinSessionPassword, setJoinSessionPassword] = useState('');
   const [selectedSessionProtected, setSelectedSessionProtected] = useState(false);
   
+  // Role State
+  const [isSpectator, setIsSpectator] = useState(false);
+  
   // Room Preview State
   const [roomPreview, setRoomPreview] = useState<{name: string, participantsCount: number} | null>(null);
 
@@ -44,7 +47,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
       if (initialRoomId) {
           setJoinSessionId(initialRoomId);
           setActiveTab('join');
-          // The logic to fetch details is now handled by the joinSessionId effect below
       }
   }, [initialRoomId]);
 
@@ -60,15 +62,12 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
           try {
               const session = await getSession(joinSessionId);
               
-              // Calculate count: API returns 'participants' map, Mock returns 'participantsCount'
               let count = 0;
               if (typeof session.participantsCount === 'number') {
                   count = session.participantsCount;
               } else if (session.participants) {
-                  // Filter for online users if status is available, otherwise count all keys
                   count = Object.values(session.participants).filter((p: any) => p.status === 'online').length;
                   if (count === 0 && Object.keys(session.participants).length > 0) {
-                       // Fallback if status tracking isn't perfect in some mock scenarios
                        count = Object.keys(session.participants).length;
                   }
               }
@@ -82,7 +81,6 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
           } catch (err) {
               setRoomPreview(null);
               setSelectedSessionProtected(false);
-              // We don't set error here to avoid annoying red text while typing
           }
       };
 
@@ -109,7 +107,8 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
     setError(null);
     setLoading(true);
     try {
-        const { sessionId, userId } = await createSession(newSessionName, newSessionPassword || null, userName);
+        const role = isSpectator ? 'spectator' : 'voter';
+        const { sessionId, userId } = await createSession(newSessionName, newSessionPassword || null, userName, role);
         onJoin(sessionId, userId, userName);
     } catch (err: any) {
         setError(err.message || "Failed to create session");
@@ -127,7 +126,8 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
     setError(null);
     setLoading(true);
     try {
-        const userId = await joinSession(joinSessionId, joinSessionPassword || null, userName);
+        const role = isSpectator ? 'spectator' : 'voter';
+        const userId = await joinSession(joinSessionId, joinSessionPassword || null, userName, role);
         onJoin(joinSessionId, userId, userName);
     } catch (err: any) {
         setError(err.message || "Failed to join session");
@@ -143,10 +143,27 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
       setError(null);
   };
 
-  // Filter sessions
   const filteredSessions = availableSessions.filter(s => 
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
       s.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Reusable Spectator Toggle
+  const SpectatorToggle = () => (
+      <div 
+        onClick={() => setIsSpectator(!isSpectator)}
+        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSpectator ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' : 'bg-white border-slate-200 dark:bg-slate-900/50 dark:border-slate-700'}`}
+      >
+          <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${isSpectator ? 'bg-blue-500 border-blue-500 text-white' : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600'}`}>
+              {isSpectator && <CheckCircle2 size={14} />}
+          </div>
+          <div className="flex-1">
+              <div className="text-sm font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                 <Eye size={14} className="text-slate-500"/> Join as Spectator
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Observe without voting</div>
+          </div>
+      </div>
   );
 
   return (
@@ -172,7 +189,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
         {/* Right Panel: Actions */}
         <div className="w-full md:w-2/3 p-8 bg-white dark:bg-slate-800 flex flex-col">
             
-            {/* User Name Input (Moved to Right) */}
+            {/* User Name Input */}
             <div className="mb-6">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Your Name</label>
                 <input 
@@ -287,6 +304,8 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
                                 placeholder="Set a room password..."
                             />
                         </div>
+                        
+                        <SpectatorToggle />
                     </div>
 
                     <div className="mt-8">
@@ -345,6 +364,8 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, initialRoomId }) => {
                                 />
                             </div>
                         )}
+
+                        <SpectatorToggle />
                     </div>
 
                     <div className="mt-8">

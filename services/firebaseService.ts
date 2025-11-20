@@ -21,6 +21,7 @@ const initDummyData = () => {
     const dummyId1 = 'room-demo-1';
     const dummyId2 = 'room-demo-2';
     const now = Date.now();
+    const systemCreatorId = 'user-system-admin';
 
     const generateBots = (startId: number, count: number) => {
         const participants: Record<string, Participant> = {};
@@ -34,7 +35,8 @@ const initDummyData = () => {
                 vote: randomVote,
                 status: 'online',
                 joinedAt: now,
-                isBot: true
+                isBot: true,
+                role: 'voter'
             };
         }
         return participants;
@@ -45,6 +47,7 @@ const initDummyData = () => {
         id: dummyId1,
         name: "Sprint 42 Planning",
         createdBy: "System",
+        creatorId: systemCreatorId,
         createdAt: now - 3600000,
         isRevealed: false,
         participants: generateBots(100, 8) // 8 Bots
@@ -55,6 +58,7 @@ const initDummyData = () => {
         id: dummyId2,
         name: "Design Team Sync",
         createdBy: "System",
+        creatorId: systemCreatorId,
         createdAt: now - 7200000,
         isRevealed: true,
         protected: true,
@@ -79,7 +83,7 @@ const notifyList = () => {
     id: s.id,
     name: s.name,
     createdAt: s.createdAt,
-    participantsCount: Object.keys(s.participants).length,
+    participantsCount: Object.values(s.participants).length,
     protected: !!s.protected
   })).sort((a, b) => b.createdAt - a.createdAt);
 
@@ -117,7 +121,7 @@ const simulateBotVotes = (sessionId: string) => {
 
 // --- SERVICE METHODS ---
 
-export const createSession = async (sessionName: string, password: string | null, creatorName: string) => {
+export const createSession = async (sessionName: string, password: string | null, creatorName: string, role: 'voter' | 'spectator' = 'voter') => {
   await new Promise(resolve => setTimeout(resolve, 500));
 
   const sessionId = `room-${Math.floor(Math.random() * 10000)}`;
@@ -128,7 +132,8 @@ export const createSession = async (sessionName: string, password: string | null
     name: creatorName,
     vote: null,
     status: 'online',
-    joinedAt: Date.now()
+    joinedAt: Date.now(),
+    role: role
   };
 
   const participants: Record<string, Participant> = { [userId]: creator };
@@ -143,7 +148,8 @@ export const createSession = async (sessionName: string, password: string | null
           vote: randomVote, 
           status: 'online',
           joinedAt: Date.now(),
-          isBot: true
+          isBot: true,
+          role: 'voter'
       };
   }
 
@@ -151,6 +157,7 @@ export const createSession = async (sessionName: string, password: string | null
     id: sessionId,
     name: sessionName,
     createdBy: creatorName,
+    creatorId: userId,
     createdAt: Date.now(),
     isRevealed: false,
     participants: participants,
@@ -158,12 +165,11 @@ export const createSession = async (sessionName: string, password: string | null
   };
 
   notifySession(sessionId);
-  // setTimeout(() => simulateBotVotes(sessionId), 100); // Bots already voted in createSession logic above for ease
-
+  
   return { sessionId, userId };
 };
 
-export const joinSession = async (sessionId: string, passwordInput: string | null, userName: string) => {
+export const joinSession = async (sessionId: string, passwordInput: string | null, userName: string, role: 'voter' | 'spectator' = 'voter') => {
   await new Promise(resolve => setTimeout(resolve, 400));
 
   const session = MOCK_SESSIONS[sessionId];
@@ -175,7 +181,8 @@ export const joinSession = async (sessionId: string, passwordInput: string | nul
     name: userName,
     vote: null,
     status: 'online',
-    joinedAt: Date.now()
+    joinedAt: Date.now(),
+    role: role
   };
 
   session.participants[userId] = participant;
@@ -218,7 +225,7 @@ export const updateRevealState = (sessionId: string, isRevealed: boolean) => {
     if (isRevealed) {
         // Logic: If user hasn't voted when revealed, put them on Break
         Object.values(session.participants).forEach(p => {
-             if (p.vote === null) {
+             if (p.vote === null && p.role !== 'spectator') {
                  p.vote = '☕';
              }
              // Snapshot votes to initialRevealVote

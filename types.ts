@@ -9,12 +9,14 @@ export interface Participant {
   status: 'online' | 'offline';
   joinedAt: number;
   isBot?: boolean;
+  role?: 'voter' | 'spectator';
 }
 
 export interface Session {
   id: string;
   name: string;
-  createdBy: string;
+  createdBy: string; // Name of creator
+  creatorId: string; // ID of creator (Admin)
   createdAt: number;
   isRevealed: boolean;
   participants: Record<string, Participant>;
