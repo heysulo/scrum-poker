@@ -72,8 +72,8 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
         
-        {/* Right Actions - Margin added to avoid overlap with absolute theme switcher */}
-        <div className="flex items-center gap-3 sm:gap-4 mr-16">
+        {/* Right Actions - Margin added to avoid overlap with absolute theme/help switchers */}
+        <div className="flex items-center gap-3 sm:gap-4 mr-28">
           
           {/* Share Button */}
           <button

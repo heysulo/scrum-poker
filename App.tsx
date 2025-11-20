@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lobby } from './components/Lobby';
 import { PokerRoom } from './components/PokerRoom';
-import { Sun, Moon, Monitor, Check, ChevronDown, WifiOff, AlertCircle } from 'lucide-react';
+import { Sun, Moon, Monitor, Check, ChevronDown, WifiOff, AlertCircle, BookOpen, X } from 'lucide-react';
 import { subscribeToConnectionStatus } from './services/api';
 
 const App: React.FC = () => {
@@ -21,6 +21,9 @@ const App: React.FC = () => {
   
   // Deep Link State
   const [initialRoomId, setInitialRoomId] = useState<string | undefined>(undefined);
+
+  // Help Modal State
+  const [showManual, setShowManual] = useState(false);
 
   // Check URL for room param on mount
   useEffect(() => {
@@ -114,8 +117,18 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Floating Theme Switcher (Always visible) */}
-        <div className="absolute top-4 right-4 z-50">
+        {/* Floating Controls (Theme & Help) */}
+        <div className="absolute top-4 right-4 z-50 flex items-center gap-3">
+             {/* User Manual Button */}
+             <button 
+                onClick={() => setShowManual(true)}
+                className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur shadow-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-500 transition-all"
+                title="User Manual"
+             >
+                <BookOpen size={20} />
+             </button>
+
+             {/* Theme Switcher */}
              <div className="relative">
                 {isThemeMenuOpen && <div className="fixed inset-0 z-40" onClick={() => setIsThemeMenuOpen(false)}></div>}
                 <button 
@@ -164,6 +177,90 @@ const App: React.FC = () => {
                 onJoin={handleJoinSession} 
                 initialRoomId={initialRoomId}
             />
+        )}
+
+        {/* User Manual Modal */}
+        {showManual && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 z-10">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                            <BookOpen size={24} />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">User Manual</h3>
+                    </div>
+                    <button onClick={() => setShowManual(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={24}/></button>
+                </div>
+                
+                <div className="p-6 overflow-y-auto leading-relaxed text-slate-600 dark:text-slate-300 space-y-6">
+                    <section>
+                        <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-xs flex items-center justify-center font-mono">1</span> 
+                            Starting a Session
+                        </h4>
+                        <ul className="list-disc list-inside space-y-1 ml-8 text-sm">
+                            <li>Enter your <strong>Name</strong> in the lobby.</li>
+                            <li>Go to the <strong>Create Room</strong> tab.</li>
+                            <li>Enter a Session Name and optional password.</li>
+                            <li>Click <strong>Create Room</strong>. You become the <strong>Admin</strong>.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-xs flex items-center justify-center font-mono">2</span> 
+                            Inviting Team Members
+                        </h4>
+                        <ul className="list-disc list-inside space-y-1 ml-8 text-sm">
+                            <li>Click the <strong>Share</strong> button (Link icon) in the top header of the room.</li>
+                            <li>The link is copied to your clipboard. Share it with your team.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-xs flex items-center justify-center font-mono">3</span> 
+                            Estimation Process
+                        </h4>
+                        <ul className="list-disc list-inside space-y-1 ml-8 text-sm">
+                            <li><strong>Vote:</strong> Select a card from the deck at the bottom.</li>
+                            <li><strong>Coffee ☕:</strong> Select if you need a break.</li>
+                            <li><strong>Presenter Mode:</strong> Use the Eye icon to mask your vote if sharing your screen.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-xs flex items-center justify-center font-mono">4</span> 
+                            Revealing & Consensus
+                        </h4>
+                        <ul className="list-disc list-inside space-y-1 ml-8 text-sm">
+                            <li><strong>Reveal:</strong> Admin clicks "Reveal Cards" (or Auto-Reveal triggers).</li>
+                            <li><strong>Stats:</strong> Review "Most Voted", "Consensus Range", and "Distribution".</li>
+                            <li><strong>Outliers:</strong> Discuss estimates with high variance.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-xs flex items-center justify-center font-mono">5</span> 
+                            Next Round
+                        </h4>
+                        <p className="ml-8 text-sm">Click <strong>Start New Round</strong> to clear votes and hide cards for the next story.</p>
+                    </section>
+                </div>
+                
+                <div className="p-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-end">
+                    <button 
+                        onClick={() => setShowManual(false)}
+                        className="px-6 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 transition-colors"
+                    >
+                        Got it
+                    </button>
+                </div>
+            </div>
+            </div>
         )}
     </div>
   );
