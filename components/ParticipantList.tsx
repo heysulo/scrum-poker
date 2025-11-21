@@ -28,9 +28,16 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
   
   const visibleParticipants = participants.filter(p => !filterVote || p.vote === filterVote);
 
+  // Sort: Current user first
+  const sortedParticipants = [...visibleParticipants].sort((a, b) => {
+    if (a.id === userId) return -1;
+    if (b.id === userId) return 1;
+    return 0;
+  });
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {visibleParticipants.map((p, index) => {
+      {sortedParticipants.map((p, index) => {
         const isMe = p.id === userId;
         const isBreak = p.vote === '☕';
         const isReady = !!p.vote;
@@ -113,7 +120,7 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                         p.vote ? (
                             <div className="relative flex items-center">
                                 {hasChanged && (
-                                    <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 flex flex-col items-end opacity-70">
+                                    <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 flex flex-col items-end opacity-70">
                                         <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">Was</span>
                                         <span className="text-xl font-bold text-slate-500 dark:text-slate-400 line-through decoration-slate-400 decoration-2">{p.initialRevealVote}</span>
                                     </div>

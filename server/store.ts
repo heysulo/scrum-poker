@@ -124,7 +124,6 @@ class Store {
     
     if (participant) {
       // User re-joining with same ID
-      logger.debug(`[Store] User ${name} (${userId}) re-connected to ${sessionId}`);
       participant.name = name; // Update name if changed
       participant.status = 'online';
       // Update role if they changed it on re-join
