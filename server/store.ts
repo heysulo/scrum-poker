@@ -1,5 +1,4 @@
 
-import logger from 'perfect-logger';
 import { Session, Participant, CardValue } from './types';
 
 export const BOT_NAMES = [
@@ -40,7 +39,6 @@ class Store {
             };
         }
     }
-    logger.info(`[Store] Repopulated demo room with bots.`);
   }
 
   initDummySession() {
@@ -63,7 +61,6 @@ class Store {
 
     this.sessions.set(sessionId, session);
     this.populateDemoBots();
-    logger.info(`[Store] Initialized Dummy Session: ${sessionId}`);
   }
 
   createSession(name: string, creatorName: string, creatorId: string, password?: string, role: 'voter' | 'spectator' = 'voter'): { sessionId: string, userId: string, session: Session } {
@@ -93,7 +90,6 @@ class Store {
     };
 
     this.sessions.set(sessionId, session);
-    logger.debug(`[Store] Created session ${sessionId} (Protected: ${!!password}) by Admin ${creatorId}`);
     return { sessionId, userId, session };
   }
 
@@ -137,7 +133,6 @@ class Store {
     }
 
     // New participant with this ID
-    logger.debug(`[Store] New participant ${name} (${userId}) added to ${sessionId} as ${role}`);
     participant = {
       id: userId,
       name,
@@ -155,7 +150,6 @@ class Store {
     const session = this.sessions.get(sessionId);
     if (session) {
       if (session.participants[userId]) {
-        logger.debug(`[Store] Removing participant ${userId} from ${sessionId}`);
         delete session.participants[userId];
       }
       
@@ -169,7 +163,6 @@ class Store {
 
       // Don't delete the demo room even if empty
       if (Object.keys(session.participants).length === 0 && sessionId !== 'room-demo') {
-        logger.info(`[Store] Session ${sessionId} is empty, deleting.`);
         this.sessions.delete(sessionId);
       }
     }
@@ -178,7 +171,6 @@ class Store {
   markParticipantOffline(sessionId: string, userId: string): void {
     const session = this.sessions.get(sessionId);
     if (session && session.participants[userId]) {
-      logger.debug(`[Store] Marking participant ${userId} offline in ${sessionId}`);
       session.participants[userId].status = 'offline';
     }
   }
