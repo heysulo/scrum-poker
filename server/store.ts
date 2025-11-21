@@ -1,9 +1,60 @@
 
 import logger from 'perfect-logger';
-import { Session, Participant } from './types';
+import { Session, Participant, CardValue } from './types';
+
+export const BOT_NAMES = [
+  "Sarah (AI)", "Tom (Backend)", "Mike (DevOps)", "Lisa (UX)", "James (Product)",
+  "Emma (QA)", "David (Frontend)", "Chris (Security)", "Anna (Mobile)", "John (Data)",
+  "Robert (Cloud)", "Pat (EM)"
+];
+
+export const BOT_ALLOWED_VOTES: CardValue[] = ['1', '2', '3', '5', '8'];
 
 class Store {
   private sessions: Map<string, Session> = new Map();
+
+  constructor() {
+    // Initialize immediately
+    this.initDummySession();
+  }
+
+  initDummySession() {
+    const sessionId = 'room-demo';
+    const creatorId = 'system-admin';
+    const creatorName = 'System';
+    const now = Date.now();
+
+    const participants: Record<string, Participant> = {};
+    
+    // Add Bots
+    for (let i = 0; i < 8; i++) {
+        const botId = `bot-${i}`;
+        participants[botId] = {
+            id: botId,
+            name: BOT_NAMES[i],
+            vote: null, // Will be set by simulation
+            status: 'online',
+            joinedAt: now,
+            isBot: true,
+            role: 'voter'
+        };
+    }
+
+    const session: Session = {
+      id: sessionId,
+      name: "Demo Room (Try it out!)",
+      createdBy: creatorName,
+      creatorId: creatorId,
+      createdAt: now,
+      isRevealed: false,
+      participants: participants,
+      protected: false,
+      allowReveal: true // Allow guests to control the demo room
+    };
+
+    this.sessions.set(sessionId, session);
+    logger.info(`[Store] Initialized Dummy Session: ${sessionId}`);
+  }
 
   createSession(name: string, creatorName: string, creatorId: string, password?: string, role: 'voter' | 'spectator' = 'voter'): { sessionId: string, userId: string, session: Session } {
     const sessionId = `room-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
@@ -97,7 +148,9 @@ class Store {
         logger.debug(`[Store] Removing participant ${userId} from ${sessionId}`);
         delete session.participants[userId];
       }
-      if (Object.keys(session.participants).length === 0) {
+      
+      // Don't delete the demo room even if empty
+      if (Object.keys(session.participants).length === 0 && sessionId !== 'room-demo') {
         logger.info(`[Store] Session ${sessionId} is empty, deleting.`);
         this.sessions.delete(sessionId);
       }

@@ -5,7 +5,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import logger from 'perfect-logger';
 import { store } from './store';
-import { setupSocket } from './socket';
+import { setupSocket, simulateBotVotes } from './socket';
 
 // Initialize Logger
 logger.initialize('ScrumSense', {
@@ -34,6 +34,12 @@ const PORT = process.env.PORT || 4000;
 
 // Setup Socket.io logic
 setupSocket(io);
+
+// Trigger initial voting for the demo room
+setTimeout(() => {
+    logger.info('[Server] Starting initial bot votes for room-demo');
+    simulateBotVotes(io, 'room-demo');
+}, 2000);
 
 // --- REST API ENDPOINTS ---
 

@@ -1,11 +1,36 @@
 
 import { Server, Socket } from 'socket.io';
 import logger from 'perfect-logger';
-import { store } from './store';
+import { store, BOT_ALLOWED_VOTES } from './store';
 import { CardValue } from './types';
 
 // Map to track socket connections: socketId -> { sessionId, userId }
 const socketUserMap = new Map<string, { sessionId: string, userId: string }>();
+
+export const simulateBotVotes = (io: Server, sessionId: string) => {
+    const session = store.getSession(sessionId);
+    if (!session) return;
+
+    // Get all bots
+    const bots = Object.values(session.participants).filter(p => p.isBot);
+    
+    bots.forEach(bot => {
+        // Random delay between 1s and 5s
+        const delay = Math.floor(Math.random() * 4000) + 1000;
+        
+        setTimeout(() => {
+            // Re-fetch session to ensure it still exists and isn't revealed
+            const currentSession = store.getSession(sessionId);
+            if (currentSession && !currentSession.isRevealed && currentSession.participants[bot.id]) {
+                const randomVote = BOT_ALLOWED_VOTES[Math.floor(Math.random() * BOT_ALLOWED_VOTES.length)];
+                currentSession.participants[bot.id].vote = randomVote;
+                
+                // Broadcast update
+                io.to(sessionId).emit('session_update', store.getPublicSession(sessionId));
+            }
+        }, delay);
+    });
+};
 
 export const setupSocket = (io: Server) => {
   io.on('connection', (socket: Socket) => {
@@ -80,6 +105,12 @@ export const setupSocket = (io: Server) => {
         });
 
         io.to(sessionId).emit('session_update', store.getPublicSession(sessionId));
+
+        // If this is the demo room, make bots vote again
+        if (sessionId === 'room-demo') {
+            logger.info(`[Socket] Triggering bot votes for demo room`);
+            simulateBotVotes(io, sessionId);
+        }
       }
     });
 
