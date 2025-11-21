@@ -18,27 +18,36 @@ class Store {
     this.initDummySession();
   }
 
+  private populateDemoBots() {
+    const sessionId = 'room-demo';
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
+
+    const now = Date.now();
+    // Add 8 Bots
+    for (let i = 0; i < 8; i++) {
+        const botId = `bot-${i}`;
+        // Only add if slot is free (though usually called when empty)
+        if (!session.participants[botId]) {
+            session.participants[botId] = {
+                id: botId,
+                name: BOT_NAMES[i],
+                vote: null, // Will be set by simulation
+                status: 'online',
+                joinedAt: now,
+                isBot: true,
+                role: 'voter'
+            };
+        }
+    }
+    logger.info(`[Store] Repopulated demo room with bots.`);
+  }
+
   initDummySession() {
     const sessionId = 'room-demo';
     const creatorId = 'system-admin';
     const creatorName = 'System';
     const now = Date.now();
-
-    const participants: Record<string, Participant> = {};
-    
-    // Add Bots
-    for (let i = 0; i < 8; i++) {
-        const botId = `bot-${i}`;
-        participants[botId] = {
-            id: botId,
-            name: BOT_NAMES[i],
-            vote: null, // Will be set by simulation
-            status: 'online',
-            joinedAt: now,
-            isBot: true,
-            role: 'voter'
-        };
-    }
 
     const session: Session = {
       id: sessionId,
@@ -47,12 +56,13 @@ class Store {
       creatorId: creatorId,
       createdAt: now,
       isRevealed: false,
-      participants: participants,
+      participants: {},
       protected: false,
       allowReveal: true // Allow guests to control the demo room
     };
 
     this.sessions.set(sessionId, session);
+    this.populateDemoBots();
     logger.info(`[Store] Initialized Dummy Session: ${sessionId}`);
   }
 
@@ -149,6 +159,14 @@ class Store {
         delete session.participants[userId];
       }
       
+      // Check demo room: if all bots kicked, respawn them
+      if (sessionId === 'room-demo') {
+        const remainingBots = Object.values(session.participants).filter(p => p.isBot);
+        if (remainingBots.length === 0) {
+            this.populateDemoBots();
+        }
+      }
+
       // Don't delete the demo room even if empty
       if (Object.keys(session.participants).length === 0 && sessionId !== 'room-demo') {
         logger.info(`[Store] Session ${sessionId} is empty, deleting.`);
